@@ -1,6 +1,6 @@
 import {
   Project
-} from './../models/Project';
+} from '../main/Project';
 
 const path = require('path');
 
