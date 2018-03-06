@@ -2,7 +2,7 @@ import {log} from "util";
 import {Project} from "./Project";
 
 export class Task {
-  dependencies: Array<Task> = [];
+  __dependencies: Array<Task> = [];
   constructor(
     private name: string,
     private project: Project
@@ -11,10 +11,10 @@ export class Task {
 
   public dependsOn(task: Task | string): Task {
     if (task instanceof Task) {
-      this.dependencies.push(task);
+      this.__dependencies.push(task);
     }
     if (typeof task == 'string') {
-      this.dependencies.push(this.project.getTask(task));
+      this.__dependencies.push(this.project.getTask(task));
     }
     return this;
   }
@@ -24,7 +24,7 @@ export class Task {
   }
 
   public execDeps(): Promise<any> {
-    return Promise.all(this.dependencies.map((task) => task.run()));
+    return Promise.all(this.__dependencies.map((task) => task.run()));
   }
 
   public run(): Promise<any> {

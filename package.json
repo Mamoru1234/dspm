@@ -10,13 +10,20 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/lodash": "^4.14.104",
     "@types/node": "^9.4.6",
+    "@types/request": "^2.47.0",
+    "@types/request-promise": "^4.1.41",
+    "@types/semver": "^5.5.0",
+    "@types/tar-fs": "^1.16.0",
     "typescript": "^2.7.2"
   },
   "dependencies": {
-    "@types/request": "^2.47.0",
-    "@types/request-promise": "^4.1.41",
+    "gunzip-maybe": "^1.4.1",
+    "lodash": "^4.17.5",
     "request": "^2.83.0",
-    "request-promise": "^4.2.2"
+    "request-promise": "^4.2.2",
+    "semver": "^5.5.0",
+    "tar-fs": "^1.16.0"
   }
 }

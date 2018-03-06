@@ -3,19 +3,19 @@ import {
 } from './Task';
 
 export class Project {
-  public tasks: {[key: string]: Task} = {};
+  public __tasks: {[key: string]: Task} = {};
   constructor(
   ) {
   }
 
   public setTask(name: string, task: Task) {
-    if (this.tasks[name]) {
+    if (this.__tasks[name]) {
       throw new Error('reasigning of task');
     }
-    this.tasks[name] = task;
+    this.__tasks[name] = task;
   }
 
   public getTask(name: string) {
-    return this.tasks[name];
+    return this.__tasks[name];
   }
 }

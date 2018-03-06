@@ -5,6 +5,8 @@
     "declaration": true,
     "types": ["node"],
     "strict": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
 
     "noUnusedLocals": true,
     "noUnusedParameters": true,
@@ -13,12 +15,13 @@
     "removeComments": true,
     "preserveConstEnums": true,
     "rootDir": "./src",
-    "outDir": "build/dist",
+    "outDir": "build/dist"
   },
   "libs": [
     "es2015.promise"
   ],
   "include": [
+    "types/**/*.d.ts",
     "src/**/*.ts"
   ]
 }

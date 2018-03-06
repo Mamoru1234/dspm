@@ -5,17 +5,18 @@ const { refineDepTask } = require('./build/dist/main/DependencyTask');
 module.exports = (project) => {
   applyJSProjectPlugin(project);
 
-  createCmdTask(project, 'abc', (task) => {
-    task.command('sleep 1s');
+  createCmdTask(project, 'clean', (task) => {
+    task.command('rm -rf test_mod');
   });
 
   refineDepTask(project, 'install', (task) => {
-    task.dependency('npm', 'webpack');
+    task.dependsOn('clean');
+    task.dependencies('npm', require('./package').dependencies);
+    task.targetFolder('./test_mod');
   });
-
-  createCmdTask(project, 'test', (task) => task
-    .command('echo $test')
-    .dependsOn('abc')
-    .dependsOn('install')
-  );
+  // createCmdTask(project, 'test', (task) => task
+  //   .command('echo $test')
+  //   .dependsOn('abc')
+  //   .dependsOn('install')
+  // );
 };
