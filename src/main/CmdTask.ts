@@ -1,7 +1,7 @@
-import {spawn} from "child_process";
+import {spawn} from 'child_process';
+import {log} from 'util';
+import {Project} from './Project';
 import { Task } from './Task';
-import {log} from "util";
-import {Project} from "./Project";
 
 export class CmdTask extends Task {
   private _command: string = '';
@@ -15,7 +15,7 @@ export class CmdTask extends Task {
     if (!this.command) {
       return Promise.resolve();
     }
-    return new Promise((res: Function, rej: Function): void => {
+    return new Promise((res, rej): void => {
       log(this._command);
       const [command, ...args] = this._command.split(' ');
       const proc = spawn(command, args);
@@ -26,7 +26,7 @@ export class CmdTask extends Task {
       proc.stderr.pipe(process.stderr);
       proc.on('exit', () => {
         res();
-      })
+      });
     });
   }
 }

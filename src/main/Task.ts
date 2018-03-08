@@ -1,20 +1,21 @@
-import {log} from "util";
-import {Project} from "./Project";
+import {log} from 'util';
+import {Project} from './Project';
 
 export class Task {
-  __dependencies: Array<Task> = [];
+  private _dependencies: Task[] = [];
+
   constructor(
     private name: string,
-    private project: Project
+    private project: Project,
   ) {
   }
 
   public dependsOn(task: Task | string): Task {
     if (task instanceof Task) {
-      this.__dependencies.push(task);
+      this._dependencies.push(task);
     }
-    if (typeof task == 'string') {
-      this.__dependencies.push(this.project.getTask(task));
+    if (typeof task === 'string') {
+      this._dependencies.push(this.project.getTask(task));
     }
     return this;
   }
@@ -24,7 +25,7 @@ export class Task {
   }
 
   public execDeps(): Promise<any> {
-    return Promise.all(this.__dependencies.map((task) => task.run()));
+    return Promise.all(this._dependencies.map((task) => task.run()));
   }
 
   public run(): Promise<any> {
@@ -39,6 +40,7 @@ export class Task {
   }
 
   public exec(): Promise<any> {
+    // tslint:disable-next-line
     console.log(`Exec: ${this.name}`);
     return Promise.resolve();
   }

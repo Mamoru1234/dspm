@@ -1,8 +1,7 @@
+import path from 'path';
 import {
-  Project
+  Project,
 } from '../main/Project';
-
-const path = require('path');
 
 // const projectPath = path.resolve('.');
 const project = new Project();

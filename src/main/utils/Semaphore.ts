@@ -1,19 +1,37 @@
 interface SemaphoreQueueItem {
-  task: () => Promise<any>,
-  resolve: Function
-  reject: Function
+  task: () => Promise<any>;
+  resolve: any;
+  reject: any;
 }
 
 export class AutoReleaseSemaphore {
-  constructor(private __value = 0) {
+  private _queue: SemaphoreQueueItem[] = [];
+
+  constructor(private _value = 0) {
     this.__pullQueue = this.__pullQueue.bind(this);
   }
-  private __queue: Array<SemaphoreQueueItem> = [];
+
+  public acquire<T>(task: () => Promise<T>): Promise<T> {
+    if (this._value === 0) {
+      return new Promise((resolve, reject) => {
+        this._queue.push({
+          reject,
+          resolve,
+          task,
+        });
+      });
+    }
+    this._value--;
+    return task().then((value) => {
+      this.__pullQueue();
+      return value;
+    });
+  }
 
   private __pullQueue() {
-    const t = this.__queue.shift();
+    const t = this._queue.shift();
     if (!t) {
-      this.__value++;
+      this._value++;
       return;
     }
     t.task().then((value) => {
@@ -22,23 +40,6 @@ export class AutoReleaseSemaphore {
     }).catch((err) => {
       t.reject(err);
       this.__pullQueue();
-    });
-  }
-
-  public acquire<T>(task: () => Promise<T>): Promise<T> {
-    if (this.__value === 0) {
-      return new Promise((resolve, reject) => {
-        this.__queue.push({
-          task,
-          resolve,
-          reject
-        });
-      });
-    }
-    this.__value--;
-    return task().then((value) => {
-      this.__pullQueue();
-      return value;
     });
   }
 }

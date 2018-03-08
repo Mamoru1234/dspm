@@ -1,11 +1,12 @@
-import { get } from 'request-promise';
-import { get as originalGet } from 'request';
-import {log} from "util";
-import { join } from 'path';
-import {extract, Headers} from 'tar-fs';
 import gunzip from 'gunzip-maybe';
-import {DependencyResolver, PackageMetaData} from "./DependencyResolver";
-import {AutoReleaseSemaphore} from "../utils/Semaphore";
+import { join } from 'path';
+import { get as originalGet } from 'request';
+import { get } from 'request-promise';
+import {extract, Headers} from 'tar-fs';
+import {log} from 'util';
+
+import {AutoReleaseSemaphore} from '../utils/Semaphore';
+import {DependencyResolver, PackageMetaData} from './DependencyResolver';
 
 // to avoid package/
 const mapNpmTarHeader = (header: Headers) => {
@@ -19,6 +20,18 @@ export class NpmDependencyResolver implements DependencyResolver {
 
   constructor(private repositoryURL: string = 'https://registry.npmjs.org') {}
 
+  public extract(targetFolder: string, metaData: PackageMetaData): Promise<string> {
+    return this.fileLock.acquire(() => {
+      return this.__extract(targetFolder, metaData);
+    });
+  }
+
+  public getMetaData(packageName: string, packageDescription: string): Promise<PackageMetaData> {
+    return this.networkLock.acquire(() => {
+      return this.__getMetaData(packageName, packageDescription);
+    });
+  }
+
   private __extract(targetFolder: string, metaData: PackageMetaData): Promise<string> {
     const distFolder = join(targetFolder, metaData.name);
     return new Promise((res, rej) => {
@@ -30,13 +43,7 @@ export class NpmDependencyResolver implements DependencyResolver {
         })
         .on('finish', () => {
           res(distFolder);
-        })
-    });
-  }
-
-  public extract(targetFolder: string, metaData: PackageMetaData): Promise<string> {
-    return this.fileLock.acquire(() => {
-      return this.__extract(targetFolder, metaData);
+        });
     });
   }
 
@@ -46,19 +53,13 @@ export class NpmDependencyResolver implements DependencyResolver {
     return get(`${this.repositoryURL}/${packageName}/${packageDescription}`).then((res) => {
       const response = JSON.parse(res);
       return {
-        name: response.name,
-        version: response.version,
         dependencies: response.dependencies,
+        name: response.name,
         options: {
-          dist: response.dist
-        }
-      }
-    }) as any
-  }
-
-  public getMetaData(packageName: string, packageDescription: string): Promise<PackageMetaData> {
-    return this.networkLock.acquire(() => {
-      return this.__getMetaData(packageName, packageDescription);
-    });
+          dist: response.dist,
+        },
+        version: response.version,
+      };
+    }) as any;
   }
 }
