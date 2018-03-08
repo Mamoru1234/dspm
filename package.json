@@ -5,7 +5,7 @@
   "bin": "build/dist/bin/dspm.js",
   "main": "index.js",
   "scripts": {
-    "build": "rm -rf build && tsc && tslint -p ."
+    "build": "rm -rf build && tslint -p . && tsc"
   },
   "author": "",
   "license": "ISC",
