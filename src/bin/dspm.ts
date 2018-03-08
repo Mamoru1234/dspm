@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { Provider } from 'nconf';
 import path from 'path';
 import {log} from 'util';

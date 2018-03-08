@@ -35,7 +35,6 @@ module.exports = (project) => {
   });
 
   createDepTask(project, 'installDist', (task) => {
-    console.log('------> ', require('./package').dependencies);
     task.dependsOn('clean');
     task.dependencies('default', require('./package').dependencies);
     task.targetPath('./build/dist');
