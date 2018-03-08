@@ -3,8 +3,8 @@ import {
   Project,
 } from '../main/Project';
 
-// const projectPath = path.resolve('.');
-const project = new Project();
+const projectPath = path.resolve('.');
+const project = new Project(projectPath);
 
 const configuration = require(path.resolve('./dspm.config.js'));
 

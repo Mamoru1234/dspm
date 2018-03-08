@@ -5,14 +5,16 @@ const { refineDepTask } = require('./build/dist/main/DependencyTask');
 module.exports = (project) => {
   applyJSProjectPlugin(project);
 
+  const modePrefix = 'test_mod';
+
   createCmdTask(project, 'clean', (task) => {
-    task.command('rm -rf test_mod');
+    task.command(`rm -rf ${modePrefix}`);
   });
 
   refineDepTask(project, 'install', (task) => {
     task.dependsOn('clean');
-    task.dependencies('npm', require('./package').dependencies);
-    task.targetFolder('./test_mod');
+    task.dependencies('default', require('./package').dependencies);
+    task.modulePrefix(modePrefix);
   });
   // createCmdTask(project, 'test', (task) => task
   //   .command('echo $test')

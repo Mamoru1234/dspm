@@ -1,6 +1,7 @@
 import { find, forEach, map, some} from 'lodash';
 import { satisfies } from 'semver';
 import {log} from 'util';
+import {Namespace} from '../Namespace';
 import {DependencyResolver, PackageMetaData} from '../resolvers/DependencyResolver';
 import {AutoReleaseSemaphore} from './Semaphore';
 
@@ -9,6 +10,7 @@ export interface DepTreeNode {
   packageVersion?: string;
   metadata?: PackageMetaData;
   parent?: DepTreeNode;
+  resolvedBy?: string;
   children: DepTreeNode[];
 }
 
@@ -18,6 +20,7 @@ export function logDepTree(node: DepTreeNode, level: number, depth: number) {
   }
   log(`Level: ${level}`);
   log(`Node: ${node.packageName}: ${node.packageVersion}`);
+  log(`Resolved by: ${node.resolvedBy}`);
   log(`Deps: `);
   log('');
   forEach(node.children, (child) => {
@@ -53,36 +56,45 @@ const semverLookup = (node: DepTreeNode, packageName: string, dependencyValue: s
 };
 
 export class DepTreeBuilder {
+  private _root: DepTreeNode = {
+    children: [],
+  };
   private _resolveSemaphore: AutoReleaseSemaphore = new AutoReleaseSemaphore(1);
 
-  constructor(private _resolver: DependencyResolver) {}
+  constructor(
+    private _resolvers: Namespace<DependencyResolver>) {}
 
-  public buildDependencyTree(dependencies: {[key: string]: any}): Promise<DepTreeNode> {
-    const root = {
-      children: [],
-    };
-    return this.__resolveDependency(root, root, dependencies)
-      .then(() => root);
+  public getRoot(): DepTreeNode {
+    return this._root;
   }
 
-  private __resolveDependency(
-    root: DepTreeNode,
+  public resolveDependencies(
+    dependencies: {[key: string]: any},
+    resolverName: string) {
+    return this._resolveDependencies(this._root, dependencies, resolverName);
+  }
+
+  private _resolveDependencies(
     parent: DepTreeNode,
-    dependencies: {[key: string]: any}): Promise<any> {
+    dependencies: {[key: string]: any},
+    resolverName?: string): Promise<any> {
     return this._resolveSemaphore.acquire(() => {
       return Promise.all(map(dependencies, (childValue, childKey) => {
         const satisfiedNode = semverLookup(parent, childKey, childValue);
         if (satisfiedNode) {
           return Promise.resolve(null);
         }
-        const target = isInRoot(root, childKey) ? parent : root;
-        return this._resolver.getMetaData(childKey, childValue).then((childMeta) => {
+        const target = isInRoot(this._root, childKey) ? parent : this._root;
+        const _resolverName = resolverName || 'default';
+        const resolver = this._resolvers.getItem(_resolverName);
+        return resolver.getMetaData(childKey, childValue).then((childMeta) => {
           const node = {
             children: [],
             metadata: childMeta,
             packageName: childMeta.name,
             packageVersion: childMeta.version,
             parent: target,
+            resolvedBy: _resolverName,
           };
           target.children.push(node);
           return node;
@@ -96,7 +108,7 @@ export class DepTreeBuilder {
         if (!node.metadata) {
           return Promise.resolve(null);
         }
-        return this.__resolveDependency(root, node, node.metadata.dependencies);
+        return this._resolveDependencies(node, node.metadata.dependencies);
       }));
     });
   }

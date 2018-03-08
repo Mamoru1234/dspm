@@ -6,5 +6,7 @@ import {NpmDependencyResolver} from '../resolvers/NpmDependencyResolver';
 
 export function applyJSProjectPlugin(project: Project) {
   const resolver = new NpmDependencyResolver();
-  createDepTask(project, 'install', {npm: resolver}, noop);
+  const resolvers = project.ensureNameSpace('resolvers');
+  resolvers.setItem('default', resolver);
+  createDepTask(project, 'install', noop);
 }

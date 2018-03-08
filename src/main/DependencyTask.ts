@@ -1,7 +1,8 @@
 import {map} from 'lodash';
-import {join, resolve} from 'path';
+import {join} from 'path';
 import {log} from 'util';
 
+import {Namespace} from './Namespace';
 import {Project} from './Project';
 import {DependencyResolver} from './resolvers/DependencyResolver';
 import {Task} from './Task';
@@ -9,18 +10,18 @@ import {DepTreeBuilder, DepTreeNode, logDepTree} from './utils/DepTreeBuilder';
 
 export class DependencyTask extends Task {
   private _packages: {[key: string]: {[key: string]: string}} = {};
-  private _folderPath: string = '';
+  private _modulePrefix: string = 'node_modules';
+  private _resolversNamespace = 'resolvers';
 
   constructor(
-    private dependencyResolvers: {[key: string]: DependencyResolver},
     name: string,
-    project: Project,
+    private _project: Project,
   ) {
-    super(name, project);
+    super(name, _project);
   }
 
-  public targetFolder(folderPath: string) {
-    this._folderPath = resolve(folderPath);
+  public modulePrefix(modulePrefix: string) {
+    this._modulePrefix = modulePrefix;
   }
 
   public dependencies(resolver: string, description: {[key: string]: string}) {
@@ -28,27 +29,31 @@ export class DependencyTask extends Task {
   }
 
   public exec(): Promise<any> {
-    if (!this._folderPath) {
-      throw new Error('You should provide modules folder');
-    }
+    const resolvers = this._project.getNamespace<DependencyResolver>(this._resolversNamespace);
+    const depTreeBuilder = new DepTreeBuilder(resolvers);
     return Promise.all(map(this._packages, (resolverDeps: {[key: string]: string}, resolverName: string) => {
-      return new DepTreeBuilder((this.dependencyResolvers[resolverName])).buildDependencyTree(resolverDeps);
-    })).then((trees) => {
-      const root = trees[0];
+      return depTreeBuilder.resolveDependencies(resolverDeps, resolverName);
+    })).then(() => {
+      const root = depTreeBuilder.getRoot();
       logDepTree(root, 0, 4);
-      return this.__exctractDepNode(this._folderPath, root, this.dependencyResolvers.npm);
+      const projectPath = this._project.getProjectPath();
+      return this.__exctractDepNode(join(projectPath, this._modulePrefix), root, resolvers);
     });
   }
 
-  private __exctractDepNode(targetPath: string, node: DepTreeNode, resolver: DependencyResolver): Promise<any> {
+  private __exctractDepNode(
+    targetPath: string,
+    node: DepTreeNode,
+    resolvers: Namespace<DependencyResolver>): Promise<any> {
     return Promise.all(map(node.children, (child: DepTreeNode) => {
-      if (!child.metadata) {
+      if (!child.metadata || !child.resolvedBy) {
         return Promise.resolve(null);
       }
+      const resolver = resolvers.getItem(child.resolvedBy);
       return resolver.extract(targetPath, child.metadata)
         .then((folderName: string) => {
           log(`Exctracted into ${folderName}`);
-          return this.__exctractDepNode(join(folderName, 'node_modules'), child, resolver);
+          return this.__exctractDepNode(join(folderName, this._modulePrefix), child, resolvers);
         });
     }));
   }
@@ -57,9 +62,8 @@ export class DependencyTask extends Task {
 export function createDepTask(
   project: Project,
   name: string,
-  dependencyResolvers: {[key: string]: DependencyResolver},
   configurator: (task: DependencyTask) => void): DependencyTask {
-  const task = new DependencyTask(dependencyResolvers, name, project);
+  const task = new DependencyTask(name, project);
   configurator(task);
   project.setTask(name, task);
   return task;
