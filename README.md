@@ -5,6 +5,12 @@
 
 Inspired by [Gradle](https://gradle.org/)
 
+### Instalation
+* Ubuntu:
+```bash
+wget -O - https://github.com/Mamoru1234/dspm/releases/download/0.0.7/install.sh | sh
+```
+
 Road Map:
 
 - [ ] DSL for configuration and ability to add more tasks
