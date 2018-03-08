@@ -1,5 +1,8 @@
 # DSPM
 
+
+[![Build Status](https://travis-ci.org/Mamoru1234/dspm.svg?branch=master)](https://travis-ci.org/Mamoru1234/dspm)
+
 Inspired by [Gradle](https://gradle.org/)
 
 Road Map:
