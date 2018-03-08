@@ -11,6 +11,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/lodash": "^4.14.104",
+    "@types/nconf": "0.0.37",
     "@types/node": "^9.4.6",
     "@types/request": "^2.47.0",
     "@types/request-promise": "^4.1.41",
@@ -21,7 +22,8 @@
   },
   "dependencies": {
     "gunzip-maybe": "^1.4.1",
-    "lodash": "^4.17.5",
+      "lodash": "^4.17.5",
+    "nconf": "^0.10.0",
     "request": "^2.83.0",
     "request-promise": "^4.2.2",
     "semver": "^5.5.0",

@@ -1,5 +1,5 @@
 import {map} from 'lodash';
-import {join} from 'path';
+import {join, resolve} from 'path';
 import {log} from 'util';
 
 import {Namespace} from './Namespace';
@@ -12,16 +12,23 @@ export class DependencyTask extends Task {
   private _packages: {[key: string]: {[key: string]: string}} = {};
   private _modulePrefix: string = 'node_modules';
   private _resolversNamespace = 'resolvers';
+  private _targetPath: string;
 
   constructor(
     name: string,
     private _project: Project,
   ) {
     super(name, _project);
+    this._targetPath = _project.getProjectPath();
   }
 
   public modulePrefix(modulePrefix: string) {
     this._modulePrefix = modulePrefix;
+    return this;
+  }
+
+  public targetPath(path: string) {
+    this._targetPath = resolve(path);
     return this;
   }
 
@@ -38,8 +45,7 @@ export class DependencyTask extends Task {
     })).then(() => {
       const root = depTreeBuilder.getRoot();
       logDepTree(root, 0, 4);
-      const projectPath = this._project.getProjectPath();
-      return this.__exctractDepNode(join(projectPath, this._modulePrefix), root, resolvers);
+      return this.__exctractDepNode(join(this._targetPath, this._modulePrefix), root, resolvers);
     });
   }
 

@@ -1,11 +1,9 @@
+const { createDepTask } = require('./build/dist/main/DependencyTask');
 const { createCmdTask } = require('./build/dist/main/CmdTask');
 const { applyJSProjectPlugin } = require('./build/dist/main/plugins/JSProjectPlugin');
-const { refineDepTask } = require('./build/dist/main/DependencyTask');
 
 module.exports = (project) => {
   applyJSProjectPlugin(project);
-
-  const modePrefix = 'test_mod';
 
   createCmdTask(project, 'a', (task) => task
     .command(`sleep 1s`)
@@ -33,17 +31,13 @@ module.exports = (project) => {
   );
 
   createCmdTask(project, 'clean', (task) => {
-    task.command(`rm -rf ${modePrefix}`);
+    task.command(`rm -rf build/dist/node_modules`);
   });
 
-  refineDepTask(project, 'install', (task) => {
+  createDepTask(project, 'installDist', (task) => {
+    console.log('------> ', require('./package').dependencies);
     task.dependsOn('clean');
     task.dependencies('default', require('./package').dependencies);
-    task.modulePrefix(modePrefix);
+    task.targetPath('./build/dist');
   });
-  // createCmdTask(project, 'test', (task) => task
-  //   .command('echo $test')
-  //   .dependsOn('abc')
-  //   .dependsOn('install')
-  // );
 };

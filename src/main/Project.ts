@@ -1,4 +1,6 @@
 import has from 'lodash/has';
+import {Provider} from 'nconf';
+
 import {Namespace} from './Namespace';
 import {
   Task,
@@ -8,10 +10,16 @@ export class Project {
   private _tasks: {[key: string]: Task} = {};
   private _namespaces: {[key: string]: Namespace<any>} = {};
 
-  constructor(private _projectPath: string) {}
+  constructor(
+    private _provider: Provider,
+    private _projectPath: string) {}
 
   public getProjectPath() {
     return this._projectPath;
+  }
+
+  public getProperty(key: string) {
+    return this._provider.get(key);
   }
 
   public ensureNameSpace<T>(name: string): Namespace<T> {
