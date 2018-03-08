@@ -3,6 +3,7 @@ import {Project} from './Project';
 
 export class Task {
   private _dependencies: Task[] = [];
+  private _execution?: Promise<any>;
 
   constructor(
     private name: string,
@@ -29,14 +30,18 @@ export class Task {
   }
 
   public run(): Promise<any> {
-    return this.execDeps().then(() => {
-      if (this.upToDate()) {
-        return Promise.resolve();
-      }
-      return this.exec();
-    }).catch((e: any) => {
-      log(e);
-    });
+    if (!this._execution) {
+      this._execution = this.execDeps().then(() => {
+        if (this.upToDate()) {
+            return Promise.resolve();
+        }
+        log(`Executing ${this.name}`);
+        return this.exec();
+      }).catch((e: any) => {
+        log(e);
+      });
+    }
+    return this._execution;
   }
 
   public exec(): Promise<any> {

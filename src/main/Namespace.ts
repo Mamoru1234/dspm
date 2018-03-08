@@ -1,3 +1,5 @@
+import has from 'lodash/has';
+
 export class Namespace<T> {
   constructor(private _cache: {[key: string]: T} = {}) {}
 

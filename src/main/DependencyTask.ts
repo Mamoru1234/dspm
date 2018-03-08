@@ -22,10 +22,12 @@ export class DependencyTask extends Task {
 
   public modulePrefix(modulePrefix: string) {
     this._modulePrefix = modulePrefix;
+    return this;
   }
 
   public dependencies(resolver: string, description: {[key: string]: string}) {
     this._packages[resolver] = Object.assign({}, description);
+    return this;
   }
 
   public exec(): Promise<any> {
