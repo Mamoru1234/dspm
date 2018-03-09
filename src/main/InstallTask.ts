@@ -2,17 +2,20 @@ import {map} from 'lodash';
 import {join, resolve} from 'path';
 import {log} from 'util';
 
+import {LockProvider} from './caches/LockProvider';
 import {Namespace} from './Namespace';
 import {Project} from './Project';
 import {DependencyResolver} from './resolvers/DependencyResolver';
 import {Task} from './Task';
 import {DepTreeBuilder, DepTreeNode, logDepTree} from './utils/DepTreeBuilder';
 
-export class DependencyTask extends Task {
+export class InstallTask extends Task {
   private _packages: {[key: string]: {[key: string]: string}} = {};
   private _modulePrefix: string = 'node_modules';
   private _resolversNamespace = 'resolvers';
+  private _lockProvidersNamespace = 'lock_providers';
   private _targetPath: string;
+  private _lockProviderName = 'default';
 
   constructor(
     name: string,
@@ -32,6 +35,11 @@ export class DependencyTask extends Task {
     return this;
   }
 
+  public lockProvider(name: string) {
+    this._lockProviderName = name;
+    return this;
+  }
+
   public dependencies(resolver: string, description: {[key: string]: string}) {
     this._packages[resolver] = Object.assign({}, description);
     return this;
@@ -39,14 +47,32 @@ export class DependencyTask extends Task {
 
   public exec(): Promise<any> {
     const resolvers = this._project.getNamespace<DependencyResolver>(this._resolversNamespace);
+    const lockProviders = this._project.getNamespace<LockProvider>(this._lockProvidersNamespace);
     const depTreeBuilder = new DepTreeBuilder(resolvers);
-    return Promise.all(map(this._packages, (resolverDeps: {[key: string]: string}, resolverName: string) => {
-      return depTreeBuilder.resolveDependencies(resolverDeps, resolverName);
-    })).then(() => {
-      const root = depTreeBuilder.getRoot();
-      logDepTree(root, 0, 4);
-      return this.__exctractDepNode(join(this._targetPath, this._modulePrefix), root, resolvers);
-    });
+    const fromLock = this._project.getProperty('fromLock');
+    let root: DepTreeNode;
+
+    const rootPromise: Promise<any> = fromLock
+      ? lockProviders.getItem(this._lockProviderName).loadDepTree().then((lockRoot) => {
+        root = lockRoot;
+      })
+      : Promise.all(map(this._packages, (resolverDeps: {[key: string]: string}, resolverName: string) => {
+        return depTreeBuilder.resolveDependencies(resolverDeps, resolverName);
+      })).then(() => {
+        root = depTreeBuilder.getRoot();
+      });
+
+    return rootPromise
+      .then(() => {
+        logDepTree(root, 0, 4);
+        if (fromLock) {
+          return Promise.resolve();
+        }
+        return lockProviders.getItem(this._lockProviderName).saveDepTree(root);
+      })
+      .then(() => {
+        return this.__exctractDepNode(join(this._targetPath, this._modulePrefix), root, resolvers);
+      });
   }
 
   private __exctractDepNode(
@@ -54,11 +80,11 @@ export class DependencyTask extends Task {
     node: DepTreeNode,
     resolvers: Namespace<DependencyResolver>): Promise<any> {
     return Promise.all(map(node.children, (child: DepTreeNode) => {
-      if (!child.metadata || !child.resolvedBy) {
+      if (!child.packageName || !child.packageVersion || !child.resolvedBy) {
         return Promise.resolve(null);
       }
       const resolver = resolvers.getItem(child.resolvedBy);
-      return resolver.extract(targetPath, child.metadata)
+      return resolver.extract(targetPath, child)
         .then((folderName: string) => {
           log(`Exctracted into ${folderName}`);
           return this.__exctractDepNode(join(folderName, this._modulePrefix), child, resolvers);
@@ -67,21 +93,21 @@ export class DependencyTask extends Task {
   }
 }
 
-export function createDepTask(
+export function createInstallTask(
   project: Project,
   name: string,
-  configurator: (task: DependencyTask) => void): DependencyTask {
-  const task = new DependencyTask(name, project);
+  configurator: (task: InstallTask) => void): InstallTask {
+  const task = new InstallTask(name, project);
   configurator(task);
   project.setTask(name, task);
   return task;
 }
 
-export function refineDepTask(
+export function refineInstallTask(
   project: Project,
   name: string,
-  configurator: (task: DependencyTask) => void): DependencyTask {
-  const task = project.getTask(name) as DependencyTask;
+  configurator: (task: InstallTask) => void): InstallTask {
+  const task = project.getTask(name) as InstallTask;
   configurator(task);
   return task;
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-wget https://github.com/Mamoru1234/dspm/releases/download/0.0.6/dspm.tar.gz
+wget https://github.com/Mamoru1234/dspm/releases/download/0.0.8/dspm.tar.gz
 
 mkdir -p .dspm/dist
 tar -xzf dspm.tar.gz -C .dspm/dist

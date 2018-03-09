@@ -2,7 +2,8 @@ import merge from 'lodash/merge';
 import {homedir} from 'os';
 import {join} from 'path';
 
-import {createDepTask} from '../DependencyTask';
+import {FSLockProvider} from '../caches/FSLockProvider';
+import {createInstallTask} from '../InstallTask';
 import {Project} from '../Project';
 import {NpmDependencyResolver} from '../resolvers/NpmDependencyResolver';
 
@@ -12,10 +13,13 @@ export function applyJSProjectPlugin(project: Project) {
   const resolvers = project.ensureNameSpace('resolvers');
   resolvers.setItem('default', resolver);
 
+  const lockProviders = project.ensureNameSpace('lock_providers');
+  lockProviders.setItem('default', new FSLockProvider(join(project.getProjectPath(), 'dspm.lock.json')));
+
   const packageJson = require(join(project.getProjectPath(), 'package.json'));
   const dependencies = merge({}, packageJson.dependencies, packageJson.devDependencies);
 
-  createDepTask(project, 'install', (task) => task
+  createInstallTask(project, 'install', (task) => task
     .dependencies('default', dependencies),
   );
 }

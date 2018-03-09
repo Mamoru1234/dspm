@@ -2,13 +2,14 @@ import { find, forEach, map, some} from 'lodash';
 import { satisfies } from 'semver';
 import {log} from 'util';
 import {Namespace} from '../Namespace';
-import {DependencyResolver, PackageMetaData} from '../resolvers/DependencyResolver';
+import {DependencyResolver} from '../resolvers/DependencyResolver';
 import {AutoReleaseSemaphore} from './Semaphore';
 
 export interface DepTreeNode {
   packageName?: string;
   packageVersion?: string;
-  metadata?: PackageMetaData;
+  dependencies?: {[key: string]: string};
+  options?: any;
   parent?: DepTreeNode;
   resolvedBy?: string;
   children: DepTreeNode[];
@@ -88,9 +89,10 @@ export class DepTreeBuilder {
         const _resolverName = resolverName || 'default';
         const resolver = this._resolvers.getItem(_resolverName);
         return resolver.getMetaData(childKey, childValue).then((childMeta) => {
-          const node = {
+          const node: DepTreeNode = {
             children: [],
-            metadata: childMeta,
+            dependencies: childMeta.dependencies,
+            options: childMeta.options,
             packageName: childMeta.name,
             packageVersion: childMeta.version,
             parent: target,
@@ -105,10 +107,10 @@ export class DepTreeBuilder {
         if (!node) {
           return Promise.resolve(null);
         }
-        if (!node.metadata) {
+        if (!node.dependencies) {
           return Promise.resolve(null);
         }
-        return this._resolveDependencies(node, node.metadata.dependencies);
+        return this._resolveDependencies(node, node.dependencies);
       }));
     });
   }

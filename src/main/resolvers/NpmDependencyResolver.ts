@@ -8,9 +8,20 @@ import {log} from 'util';
 
 import {ContentCache} from '../caches/ContentCache';
 import {FSContentCache} from '../caches/FSContentCache';
+import {DepTreeNode} from '../utils/DepTreeBuilder';
 import {AutoReleaseSemaphore} from '../utils/Semaphore';
 import {DependencyResolver, PackageMetaData} from './DependencyResolver';
 import ReadableStream = NodeJS.ReadableStream;
+
+// temporal fix caused by bug in npm registry which is related to scoped packages
+const encodePackagePart = (packageName: string, packageDescription: string) => {
+  const charCode = packageDescription.charCodeAt(0);
+  const _packageName = packageName.replace('/', '%2F');
+  if (_packageName[0] === '@' && charCode > 47 && charCode < 58) {
+    return `${_packageName}/=${packageDescription}`;
+  }
+  return `${_packageName}/${packageDescription}`;
+};
 
 // to avoid package/ prefix
 const mapNpmTarHeader = (header: Headers) => {
@@ -19,7 +30,7 @@ const mapNpmTarHeader = (header: Headers) => {
 };
 
 export class NpmDependencyResolver implements DependencyResolver {
-  private networkLock: AutoReleaseSemaphore = new AutoReleaseSemaphore(16);
+  private networkLock: AutoReleaseSemaphore = new AutoReleaseSemaphore(32);
   private fileLock: AutoReleaseSemaphore = new AutoReleaseSemaphore(16);
   private _modulesCache?: ContentCache;
 
@@ -33,18 +44,18 @@ export class NpmDependencyResolver implements DependencyResolver {
     }
   }
 
-  public extract(targetFolder: string, metaData: PackageMetaData): Promise<string> {
+  public extract(targetFolder: string, node: DepTreeNode): Promise<string> {
     return this.fileLock.acquire(() => {
-      const itemKey = `${metaData.name}#${metaData.version}`;
-      const distFolder = join(targetFolder, metaData.name);
+      const itemKey = `${node.packageName}#${node.packageVersion}`;
+      const distFolder = join(targetFolder, node.packageName!!);
       if (!this._modulesCache) {
-        return this.__extractFromRegistry(distFolder, metaData);
+        return this.__extractFromRegistry(distFolder, node);
       }
       return this._modulesCache.hasItem(itemKey)
         .then((isInCache) => {
-          log(`${metaData.name} [${metaData.version}] in cache: ${isInCache}`);
+          log(`${node.packageName} [${node.packageVersion}] in cache: ${isInCache}`);
           if (!isInCache) {
-            return this.__extractFromRegistry(distFolder, metaData);
+            return this.__extractFromRegistry(distFolder, node);
           }
           return this.__extract(distFolder, this._modulesCache!!.getItem(itemKey));
         });
@@ -57,10 +68,10 @@ export class NpmDependencyResolver implements DependencyResolver {
     });
   }
 
-  private __extractFromRegistry(distFolder: string, metaData: PackageMetaData): Promise<string> {
+  private __extractFromRegistry(distFolder: string, node: DepTreeNode): Promise<string> {
 
-    const itemKey = `${metaData.name}#${metaData.version}`;
-    const moduleStream = originalGet(metaData.options.dist.tarball);
+    const itemKey = `${node.packageName}#${node.packageVersion}`;
+    const moduleStream = originalGet(node.options.dist.tarball);
 
     if (this._modulesCache) {
       moduleStream.pipe(this._modulesCache.setItem(itemKey));
@@ -85,8 +96,7 @@ export class NpmDependencyResolver implements DependencyResolver {
 
   private __getMetaData(packageName: string, packageDescription: string): Promise<PackageMetaData> {
     log(packageName);
-    const _packageName = packageName.replace('/', '%2F');
-    return get(`${this.repositoryURL}/${_packageName}/${packageDescription}`).then((res) => {
+    return get(`${this.repositoryURL}/${encodePackagePart(packageName, packageDescription)}`).then((res) => {
       const response = JSON.parse(res);
       return {
         dependencies: response.dependencies,

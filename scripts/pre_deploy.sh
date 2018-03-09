@@ -2,7 +2,7 @@
 
 echo "Packaging deploy"
 
-node build/dist/bin/dspm.js installDist --cache.path=null
+node build/dist/bin/dspm.js installDist --fromLock --cache.path=null
 
 cd build/dist
 

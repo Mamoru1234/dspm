@@ -1,3 +1,5 @@
+import {DepTreeNode} from '../utils/DepTreeBuilder';
+
 export interface PackageMetaData {
   name: string;
   version: string;
@@ -6,6 +8,6 @@ export interface PackageMetaData {
 }
 
 export interface DependencyResolver {
-  extract(targetFolder: string, metaData: PackageMetaData): Promise<string>;
+  extract(targetFolder: string, node: DepTreeNode): Promise<string>;
   getMetaData(packageName: string, packageDescription: any): Promise<PackageMetaData>;
 }

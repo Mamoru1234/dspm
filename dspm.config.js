@@ -1,10 +1,11 @@
-const { createDepTask } = require('./build/dist/main/DependencyTask');
+const { createInstallTask } = require('./build/dist/main/InstallTask');
 const { createCmdTask } = require('./build/dist/main/CmdTask');
 const { applyJSProjectPlugin } = require('./build/dist/main/plugins/JSProjectPlugin');
 
 module.exports = (project) => {
   applyJSProjectPlugin(project);
 
+  console.log(project.getProperty('fromLock'), typeof project.getProperty('fromLock'));
   createCmdTask(project, 'a', (task) => task
     .command(`sleep 1s`)
   );
@@ -34,7 +35,7 @@ module.exports = (project) => {
     task.command(`rm -rf build/dist/node_modules`);
   });
 
-  createDepTask(project, 'installDist', (task) => {
+  createInstallTask(project, 'installDist', (task) => {
     task.dependsOn('clean');
     task.dependencies('default', require('./package').dependencies);
     task.targetPath('./build/dist');
