@@ -2,9 +2,7 @@ import has from 'lodash/has';
 import {Provider} from 'nconf';
 
 import {Namespace} from './Namespace';
-import {
-  Task,
-} from './Task';
+import {Task} from './Task';
 
 export class Project {
   private _tasks: {[key: string]: Task} = {};
@@ -18,8 +16,12 @@ export class Project {
     return this._projectPath;
   }
 
-  public getProperty(key: string) {
-    return this._provider.get(key);
+  public getProperty(key: string, defaultValue?: any) {
+    const _providerValue = this._provider.get(key);
+    if (_providerValue === undefined) {
+      return defaultValue;
+    }
+    return _providerValue;
   }
 
   public ensureNameSpace<T>(name: string): Namespace<T> {

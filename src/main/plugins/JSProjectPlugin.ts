@@ -1,4 +1,5 @@
 import merge from 'lodash/merge';
+import {homedir} from 'os';
 import {join} from 'path';
 
 import {createDepTask} from '../DependencyTask';
@@ -6,7 +7,8 @@ import {Project} from '../Project';
 import {NpmDependencyResolver} from '../resolvers/NpmDependencyResolver';
 
 export function applyJSProjectPlugin(project: Project) {
-  const resolver = new NpmDependencyResolver();
+  const cachePath = project.getProperty('cache:path', join(homedir(), '.cache', 'dspm'));
+  const resolver = new NpmDependencyResolver(cachePath);
   const resolvers = project.ensureNameSpace('resolvers');
   resolvers.setItem('default', resolver);
 
