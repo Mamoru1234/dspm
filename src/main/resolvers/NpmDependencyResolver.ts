@@ -1,3 +1,4 @@
+import Promise from 'bluebird';
 import gunzip from 'gunzip-maybe';
 import { sync as mkDirSync } from 'mkdirp';
 import { join } from 'path';
@@ -89,19 +90,23 @@ export class NpmDependencyResolver implements DependencyResolver {
           rej(err);
         })
         .on('finish', () => {
-          res(distFolder);
+          res();
         });
-    });
+    })
+      .then(() => {
+        return distFolder;
+      });
   }
 
   private __getMetaData(packageName: string, packageDescription: string): Promise<PackageMetaData> {
-    log(packageName);
+    log(`Get Metadata: ${packageName}[${packageDescription}]`);
     return get(`${this.repositoryURL}/${encodePackagePart(packageName, packageDescription)}`).then((res) => {
       const response = JSON.parse(res);
       return {
         dependencies: response.dependencies,
         name: response.name,
         options: {
+          bin: response.bin,
           dist: response.dist,
         },
         version: response.version,

@@ -1,3 +1,4 @@
+import Promise from 'bluebird';
 import WritableStream = NodeJS.WritableStream;
 import ReadableStream = NodeJS.ReadableStream;
 

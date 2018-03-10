@@ -1,3 +1,4 @@
+import Promise from 'bluebird';
 import { find, forEach, map, some} from 'lodash';
 import { satisfies } from 'semver';
 import {log} from 'util';

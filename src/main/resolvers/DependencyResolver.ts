@@ -1,3 +1,4 @@
+import Promise from 'bluebird';
 import {DepTreeNode} from '../utils/DepTreeBuilder';
 
 export interface PackageMetaData {

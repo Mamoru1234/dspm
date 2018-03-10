@@ -1,3 +1,4 @@
+import Promise from 'bluebird';
 import {spawn} from 'child_process';
 import {log} from 'util';
 import {Project} from './Project';

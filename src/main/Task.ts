@@ -1,3 +1,4 @@
+import Promise from 'bluebird';
 import {log} from 'util';
 import {Project} from './Project';
 

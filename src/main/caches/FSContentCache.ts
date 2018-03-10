@@ -1,3 +1,4 @@
+import Promise from 'bluebird';
 import {createReadStream, createWriteStream, existsSync} from 'fs';
 import {join} from 'path';
 import {ContentCache} from './ContentCache';

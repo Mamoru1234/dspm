@@ -1,7 +1,12 @@
+import Promise from 'bluebird';
 import {readFile, writeFile} from 'fs';
 import map from 'lodash/map';
+import noop from 'lodash/noop';
 import {DepTreeNode} from '../utils/DepTreeBuilder';
 import {LockProvider} from './LockProvider';
+
+const readFileAsync = Promise.promisify(readFile);
+const writeFileAsync = Promise.promisify(writeFile);
 
 interface PureDepTreeNode {
   packageName?: string;
@@ -18,12 +23,8 @@ export class FSLockProvider implements LockProvider {
   }
 
   public loadDepTree(): Promise<DepTreeNode> {
-    return new Promise((res, rej) => {
-      readFile(this._lockPath, (err, data) => {
-        if (err) {
-          rej(err);
-          return;
-        }
+    return readFileAsync(this._lockPath)
+      .then((data) => {
         const root: DepTreeNode = {
           children: [],
         };
@@ -31,24 +32,16 @@ export class FSLockProvider implements LockProvider {
         root.children = map(parsedData.children, (child) => {
           return this._loadNode(root, child);
         });
-        res(root);
+        return root;
       });
-    });
   }
 
   public saveDepTree(root: DepTreeNode): Promise<void> {
     const serializableRoot: PureDepTreeNode = {
       children: map(root.children, this._serializeNode),
     };
-    return new Promise((res, rej) => {
-      writeFile(this._lockPath, JSON.stringify(serializableRoot), (err) => {
-        if (err) {
-          rej(err);
-          return;
-        }
-        res();
-      });
-    });
+    return writeFileAsync(this._lockPath, JSON.stringify(serializableRoot))
+      .then(noop);
   }
 
   private _loadNode(parent: DepTreeNode, node: PureDepTreeNode): DepTreeNode {

@@ -1,3 +1,5 @@
+import Promise from 'bluebird';
+
 interface SemaphoreQueueItem {
   task: () => Promise<any>;
   resolve: any;
