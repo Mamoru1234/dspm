@@ -18,9 +18,5 @@
     "preserveConstEnums": true,
     "rootDir": "./src",
     "outDir": "build/dist"
-  },
-  "include": [
-    "types/**/*.d.ts",
-    "src/**/*.ts"
-  ]
+  }
 }

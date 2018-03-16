@@ -2,8 +2,8 @@
 
 TARGET_PATH=$(realpath $1)
 
-rm -rf "$TARGET_PATH/.dspm"
-rm -rf "$TARGET_PATH/dspm"
+rm -rfv "$TARGET_PATH/.dspm"
+rm -rfv "$TARGET_PATH/dspm"
 
 mkdir -p "$TARGET_PATH/.dspm/dist"
 
