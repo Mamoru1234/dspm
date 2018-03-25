@@ -10,7 +10,9 @@ import {createTimer} from './TimerPromise';
 export interface ResolutionParam {
   time: number;
   description: string;
-  metaData: PackageMetaData;
+  name: string;
+  dependencies: {[key: string]: string};
+  resolvedVersion: string;
 }
 
 export class TestDepResolver implements DependencyResolver{
@@ -31,10 +33,22 @@ export class TestDepResolver implements DependencyResolver{
   constructor(resolutionConfig: ResolutionParam[]) {
     this.getMetadataStub = sinon.stub().throws('Unknown package getting');
     forEach(resolutionConfig, (resolutionItem: ResolutionParam) => {
+      const metaData: PackageMetaData = {
+        name: resolutionItem.name,
+        dependencies: resolutionItem.dependencies,
+        version: resolutionItem.resolvedVersion,
+        options: {},
+      };
       this.getMetadataStub
-        .withArgs(resolutionItem.metaData.name, resolutionItem.description)
-        .returns(createTimer(resolutionItem.time, resolutionItem.metaData));
+        .withArgs(resolutionItem.name, resolutionItem.description)
+        .callsFake(() => {
+          return createTimer(resolutionItem.time, metaData)
+        });
     });
-    this.getMetaData = this.getMetadataStub;
+    this.getMetaData = (...args: any[]) => {
+      return this.getMetadataStub(...args).then((result: any) => {
+        return result;
+      });
+    }
   }
 }

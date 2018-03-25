@@ -86,10 +86,10 @@ export class DepTreeBuilder {
         if (satisfiedNode) {
           return Promise.resolve(null);
         }
-        const target = isInRoot(this._root, childKey) ? parent : this._root;
         const _resolverName = resolverName || 'default';
         const resolver = this._resolvers.getItem(_resolverName);
         return resolver.getMetaData(childKey, childValue).then((childMeta) => {
+          const target = isInRoot(this._root, childKey) ? parent : this._root;
           const node: DepTreeNode = {
             children: [],
             dependencies: childMeta.dependencies,

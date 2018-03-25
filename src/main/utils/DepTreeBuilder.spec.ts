@@ -24,6 +24,7 @@ interface AssertTreeNode {
 
 interface GenerationConfig {
   message: string;
+  skip?: boolean;
   resolvers: {[key: string]: ResolutionParam[]};
   resolutionCalls: {
     dependencies: {[key: string]: string};
@@ -45,7 +46,12 @@ function assertTreeNode(depNode: DepTreeNode, testNode: AssertTreeNode) {
 }
 
 function generateResolutionTest(getClock: () => SinonFakeTimers, config: GenerationConfig) {
-  it(config.message, (done) => {
+  if (config.skip) {
+    // just to havew mention in log that we skipped test case
+    it.skip(config.message, () => {});
+    return;
+  }
+  it(config.message, (done: any) => {
     const resolvers = new Namespace<TestDepResolver>();
     forEach(config.resolvers, (resolveConfig: ResolutionParam[], resolverName: string) => {
       resolvers.setItem(resolverName, new TestDepResolver(resolveConfig));
@@ -76,30 +82,26 @@ describe('utils/DepTreeBuilder', () => {
     clock.restore();
   });
   generateResolutionTest(() => clock, {
+    // skip: true,
     message: 'Simple resolution',
     resolvers: {
       'default': [
         {
           description: '^1.0.0',
           time: 100,
-          metaData: {
-            version: '1.0.1',
-            name: 'a',
-            dependencies: {
-              b: '^1.0.0'
-            },
-            options: {},
+          name: 'a',
+          dependencies: {
+            b: '^1.0.0'
           },
+          resolvedVersion: '1.0.1',
         },
         {
           description: '^1.0.0',
           time: 10,
-          metaData: {
-            version: '1.1.1',
-            name: 'b',
-            dependencies: {},
-            options: {},
+          name: 'b',
+          dependencies: {
           },
+          resolvedVersion: '1.1.1',
         },
       ]
     },
@@ -125,5 +127,207 @@ describe('utils/DepTreeBuilder', () => {
         }
       ],
     },
+  });
+  describe('Dep conflicts', () => {
+    generateResolutionTest(() => clock, {
+      // skip: true,
+      message: 'a has b which conflicts with root one',
+      resolvers: {
+        'default': [
+          {
+            description: '^1.0.0',
+            time: 100,
+            resolvedVersion: '1.0.1',
+            name: 'a',
+            dependencies: {
+              b: '^2.0.0'
+            },
+          },
+          {
+            description: '^2.0.0',
+            time: 10,
+            resolvedVersion: '2.1.1',
+            name: 'b',
+            dependencies: {
+            },
+          },
+          {
+            description: '^1.0.0',
+            time: 10,
+            resolvedVersion: '1.1.1',
+            name: 'b',
+            dependencies: {
+            },
+          },
+        ]
+      },
+      resolutionCalls: [
+        {
+          dependencies: {
+            a: '^1.0.0',
+            b: '^1.0.0',
+          },
+          resolverName: 'default'
+        },
+      ],
+      root: {
+        children: [
+          {
+            packageName: 'a',
+            packageVersion: '1.0.1',
+            children: [
+              {
+                packageVersion: '2.1.1',
+                packageName: 'b',
+                children: [],
+              }
+            ],
+          },
+          {
+            packageVersion: '1.1.1',
+            packageName: 'b',
+            children: [],
+          }
+        ],
+      },
+    });
+    generateResolutionTest(() => clock, {
+      message: 'a has b which conflicts with root one and old b resolves slowly',
+      // skip: true,
+      resolvers: {
+        'default': [
+          {
+            description: '^1.0.0',
+            time: 100,
+            resolvedVersion: '1.0.1',
+            name: 'a',
+            dependencies: {
+              b: '^2.0.0'
+            },
+          },
+          {
+            description: '^2.0.0',
+            time: 10,
+            resolvedVersion: '2.1.1',
+            name: 'b',
+            dependencies: {
+            },
+          },
+          {
+            description: '^1.0.0',
+            time: 10000,
+            resolvedVersion: '1.1.1',
+            name: 'b',
+            dependencies: {
+            },
+          },
+        ]
+      },
+      resolutionCalls: [
+        {
+          dependencies: {
+            a: '^1.0.0',
+            b: '^1.0.0',
+          },
+          resolverName: 'default'
+        },
+      ],
+      root: {
+        children: [
+          {
+            packageName: 'a',
+            packageVersion: '1.0.1',
+            children: [
+              {
+                packageVersion: '2.1.1',
+                packageName: 'b',
+                children: [],
+              }
+            ],
+          },
+          {
+            packageVersion: '1.1.1',
+            packageName: 'b',
+            children: [],
+          }
+        ],
+      },
+    });
+    generateResolutionTest(() => clock, {
+      message: 'One of concurrency samples',
+      // skip: true,
+      resolvers: {
+        'default': [
+          {
+            description: '^1.0.0',
+            time: 100,
+            resolvedVersion: '1.0.1',
+            name: 'a',
+            dependencies: {
+              c: '^2.0.0'
+            },
+          },
+          {
+            description: '^1.0.0',
+            time: 10,
+            resolvedVersion: '1.1.1',
+            name: 'b',
+            dependencies: {
+              'c': '^1.0.0'
+            },
+          },
+          {
+            description: '^2.0.0',
+            time: 10000,
+            resolvedVersion: '2.1.1',
+            name: 'c',
+            dependencies: {
+            },
+          },
+          {
+            description: '^1.0.0',
+            time: 10,
+            resolvedVersion: '1.1.1',
+            name: 'c',
+            dependencies: {
+            },
+          },
+        ]
+      },
+      resolutionCalls: [
+        {
+          dependencies: {
+            a: '^1.0.0',
+            b: '^1.0.0',
+          },
+          resolverName: 'default'
+        },
+      ],
+      root: {
+        children: [
+          {
+            packageName: 'a',
+            packageVersion: '1.0.1',
+            children: [],
+          },
+          {
+            packageVersion: '1.1.1',
+            packageName: 'b',
+            children: [
+              {
+                packageName: 'c',
+                packageVersion: '1.1.1',
+                children: [],
+              }
+            ],
+          },
+          {
+            packageName: 'c',
+            packageVersion: '2.1.1',
+            children: [],
+          }
+        ],
+      },
+    });
   });
 });

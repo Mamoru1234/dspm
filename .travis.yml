@@ -2,6 +2,7 @@ language: node_js
 node_js:
   - '8'
 script:
+  - npm run test
   - npm run build
 before_deploy: './scripts/pre_deploy.sh'
 deploy:

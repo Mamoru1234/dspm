@@ -1,6 +1,6 @@
 # Sample of ts usage with dspm
 
-## Inital Setup
+## Initial Setup
 * ./install.sh
 
 This will setup wrapper for dspm.
