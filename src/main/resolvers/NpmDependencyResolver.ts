@@ -9,6 +9,7 @@ import {log} from 'util';
 
 import {ContentCache} from '../caches/ContentCache';
 import {FSContentCache} from '../caches/FSContentCache';
+import {ChainedWriteStream} from '../streams/ChainedWriteStream';
 import {DepTreeNode} from '../utils/DepTreeNode';
 import {AutoReleaseSemaphore} from '../utils/Semaphore';
 import {DependencyResolver, PackageMetaData} from './DependencyResolver';
@@ -72,13 +73,13 @@ export class NpmDependencyResolver implements DependencyResolver {
   private __extractFromRegistry(distFolder: string, node: DepTreeNode): Promise<string> {
 
     const itemKey = `${node.packageName}#${node.packageVersion}`;
-    const moduleStream = originalGet(node.options.dist.tarball);
+    let moduleStream: any = originalGet(node.options.dist.tarball);
 
     if (this._modulesCache) {
-      moduleStream.pipe(this._modulesCache.setItem(itemKey));
+      moduleStream = moduleStream.pipe(new ChainedWriteStream(this._modulesCache.setItem(itemKey)));
     }
 
-    return this.__extract(distFolder, moduleStream as any);
+    return this.__extract(distFolder, moduleStream);
   }
 
   private __extract(distFolder: string, moduleStream: ReadableStream): Promise<string> {

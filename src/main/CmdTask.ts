@@ -4,6 +4,7 @@ import {log} from 'util';
 import {Project} from './Project';
 import { Task } from './Task';
 
+// FIXME: CmdTask should spawn shell to provide shell syntax
 export class CmdTask extends Task {
   private _command: string = '';
 
