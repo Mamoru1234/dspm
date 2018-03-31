@@ -109,6 +109,7 @@ export class NpmDependencyResolver implements DependencyResolver {
         options: {
           bin: response.bin,
           dist: response.dist,
+          scripts: response.scripts,
         },
         version: response.version,
       };

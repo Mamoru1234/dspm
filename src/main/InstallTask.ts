@@ -1,7 +1,5 @@
 import Promise from 'bluebird';
-import {chmodSync, constants, symlink} from 'fs';
-import {forEach, map, noop} from 'lodash';
-import mkdirp from 'mkdirp';
+import {forEach, map} from 'lodash';
 import {join, resolve} from 'path';
 import {log} from 'util';
 
@@ -12,8 +10,7 @@ import {DependencyResolver} from './resolvers/DependencyResolver';
 import {Task} from './Task';
 import {DepTreeBuilder} from './utils/DepTreeBuilder';
 import {DepTreeNode} from './utils/DepTreeNode';
-
-const symLinkAsync = Promise.promisify(symlink);
+import {BinProvider} from './utils/package/BinProvider';
 
 export class InstallTask extends Task {
   private _packages: {[key: string]: {[key: string]: string}} = {};
@@ -62,7 +59,9 @@ export class InstallTask extends Task {
 
     return rootPromise
       .then((root: DepTreeNode) => {
-        return this.__exctractDepNode(join(this._targetPath, this._modulePrefix), root, resolvers);
+        const targetPath = join(this._targetPath, this._modulePrefix);
+        const binProvider = new BinProvider(join(targetPath, '.bin'));
+        return this.__exctractDepNode(targetPath, root, binProvider, resolvers);
       });
   }
 
@@ -81,48 +80,10 @@ export class InstallTask extends Task {
       });
   }
 
-  // FIXME find better way to handle duplicated links error then ignoring promise error
-  private _createBinSymlinks(distFolder: string, node: DepTreeNode): Promise<void> {
-    if (!node.options.bin) {
-      return Promise.resolve();
-    }
-    const {bin} = node.options;
-
-    const binPath = join(this._targetPath, this._modulePrefix, '.bin');
-
-    mkdirp.sync(binPath);
-
-    if (typeof bin === 'string') {
-      const linkPath = join(distFolder, bin);
-      log(`Linking: [${node.packageName}]: ${linkPath}`);
-      const targetLink = join(binPath, node.packageName!!);
-      return symLinkAsync(linkPath, targetLink)
-        .then(() => {
-          // tslint:disable-next-line
-          chmodSync(linkPath, constants.S_IXUSR | constants.S_IRUSR);
-        }, noop);
-    }
-
-    if (typeof bin === 'object') {
-      const binKeysLinks = Object.keys(bin).map((binKey) => {
-        const linkPath = join(distFolder, bin[binKey]);
-        log(`Linking: [${binKey}]: ${linkPath}`);
-        const targetLink = join(binPath, binKey);
-        return symLinkAsync(linkPath, targetLink)
-          .then(() => {
-            // tslint:disable-next-line
-            chmodSync(linkPath, constants.S_IXUSR | constants.S_IRUSR);
-          }, noop);
-      });
-      return Promise.all(binKeysLinks).then(noop);
-    }
-
-    return Promise.reject('Unknown bin links creation error');
-  }
-
   private __exctractDepNode(
     targetPath: string,
     node: DepTreeNode,
+    binProvider: BinProvider,
     resolvers: Namespace<DependencyResolver>): Promise<any> {
     return Promise.all(map(node.children, (child: DepTreeNode) => {
       if (!child.packageName || !child.packageVersion || !child.resolvedBy) {
@@ -131,12 +92,12 @@ export class InstallTask extends Task {
       const resolver = resolvers.getItem(child.resolvedBy);
       return resolver.extract(targetPath, child)
         .then((folderName: string) => {
-          return this._createBinSymlinks(folderName, child)
+          return binProvider.provideBinLinks(folderName, child)
             .then(() => folderName);
         })
         .then((folderName: string) => {
           log(`Exctracted into ${folderName}`);
-          return this.__exctractDepNode(join(folderName, this._modulePrefix), child, resolvers);
+          return this.__exctractDepNode(join(folderName, this._modulePrefix), child, binProvider, resolvers);
         });
     }));
   }
