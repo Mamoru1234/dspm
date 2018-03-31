@@ -1,20 +1,11 @@
 import Promise from 'bluebird';
-import { find, forEach, map, some} from 'lodash';
-import { satisfies } from 'semver';
+import {find, forEach, some} from 'lodash';
+import {satisfies} from 'semver';
 import {log} from 'util';
 import {Namespace} from '../Namespace';
 import {DependencyResolver} from '../resolvers/DependencyResolver';
-import {AutoReleaseSemaphore} from './Semaphore';
-
-export interface DepTreeNode {
-  packageName?: string;
-  packageVersion?: string;
-  dependencies?: {[key: string]: string};
-  options?: any;
-  parent?: DepTreeNode;
-  resolvedBy?: string;
-  children: DepTreeNode[];
-}
+import {DepTreeNode} from './DepTreeNode';
+import {ResolutionQueue, ResolutionQueueItem} from './ResolutionQueue';
 
 export function logDepTree(node: DepTreeNode, level: number, depth: number) {
   if (level === depth) {
@@ -61,58 +52,73 @@ export class DepTreeBuilder {
   private _root: DepTreeNode = {
     children: [],
   };
-  private _resolveSemaphore: AutoReleaseSemaphore = new AutoReleaseSemaphore(1);
+  private _queue: ResolutionQueue = new ResolutionQueue();
 
   constructor(
     private _resolvers: Namespace<DependencyResolver>) {}
 
-  public getRoot(): DepTreeNode {
-    return this._root;
+  public getRoot(): Promise<DepTreeNode> {
+    return this._resolveQueue()
+      .then(() => {
+        return this._root;
+      });
   }
 
   public resolveDependencies(
     dependencies: {[key: string]: any},
-    resolverName: string) {
-    return this._resolveDependencies(this._root, dependencies, resolverName);
+    resolverName: string): void {
+    forEach(dependencies, (packageDescription: any, packageName: string) => {
+      this._queue.addItem({
+        packageDescription,
+        packageName,
+        parent: this._root,
+        resolverName,
+      });
+    });
   }
 
-  private _resolveDependencies(
-    parent: DepTreeNode,
-    dependencies: {[key: string]: any},
-    resolverName?: string): Promise<any> {
-    return this._resolveSemaphore.acquire(() => {
-      return Promise.all(map(dependencies, (childValue, childKey) => {
-        const satisfiedNode = semverLookup(parent, childKey, childValue);
-        if (satisfiedNode) {
-          return Promise.resolve(null);
-        }
-        const _resolverName = resolverName || 'default';
-        const resolver = this._resolvers.getItem(_resolverName);
-        return resolver.getMetaData(childKey, childValue).then((childMeta) => {
-          const target = isInRoot(this._root, childKey) ? parent : this._root;
-          const node: DepTreeNode = {
-            children: [],
-            dependencies: childMeta.dependencies,
-            options: childMeta.options,
-            packageName: childMeta.name,
-            packageVersion: childMeta.version,
-            parent: target,
-            resolvedBy: _resolverName,
-          };
-          target.children.push(node);
-          return node;
-        });
-      }));
+  private _resolveQueue(): Promise<void> {
+    const queueLevel = this._queue.pullQueue();
+    if (queueLevel === undefined) {
+      return Promise.resolve();
+    }
+    return Promise.map(queueLevel, (value: ResolutionQueueItem) => {
+      const { parent, packageName, packageDescription } = value;
+      const satisfiedNode = semverLookup(parent, packageName, packageDescription);
+      if (satisfiedNode) {
+        return Promise.resolve(null);
+      }
+      const _resolverName = value.resolverName || 'default';
+      const resolver = this._resolvers.getItem(_resolverName);
+      return resolver.getMetaData(packageName, packageDescription).then((childMeta) => {
+        const target = isInRoot(this._root, packageName) ? parent : this._root;
+        const node: DepTreeNode = {
+          children: [],
+          dependencies: childMeta.dependencies,
+          options: childMeta.options,
+          packageName: childMeta.name,
+          packageVersion: childMeta.version,
+          parent: target,
+          resolvedBy: _resolverName,
+        };
+        target.children.push(node);
+        return node;
+      });
     }).then((nodes: Array<DepTreeNode | null>) => {
-      return Promise.all(map(nodes, (node: DepTreeNode) => {
-        if (!node) {
-          return Promise.resolve(null);
+      forEach(nodes, (node: DepTreeNode | null) => {
+        if (!node || !node.dependencies) {
+          return;
         }
-        if (!node.dependencies) {
-          return Promise.resolve(null);
-        }
-        return this._resolveDependencies(node, node.dependencies);
-      }));
+        forEach(node.dependencies, (packageDescription: any, packageName: string) => {
+          this._queue.addItem({
+            packageDescription,
+            packageName,
+            parent: node,
+          });
+        });
+      });
+    }).then(() => {
+      return this._resolveQueue();
     });
   }
 }

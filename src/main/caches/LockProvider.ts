@@ -1,5 +1,5 @@
 import Promise from 'bluebird';
-import {DepTreeNode} from '../utils/DepTreeBuilder';
+import {DepTreeNode} from '../utils/DepTreeNode';
 
 export interface LockProvider {
   loadDepTree(): Promise<DepTreeNode>;

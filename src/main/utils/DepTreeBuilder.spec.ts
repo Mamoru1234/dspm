@@ -1,5 +1,4 @@
 /* tslint:disable */
-import Promise from 'bluebird';
 import 'mocha';
 import forEach from 'lodash/forEach';
 import sortBy from 'lodash/sortBy';
@@ -9,7 +8,8 @@ import sinonChai from 'sinon-chai';
 import sinon, {SinonFakeTimers} from 'sinon';
 import {ResolutionParam, TestDepResolver} from './TestDepResolver';
 import {Namespace} from '../Namespace';
-import {DepTreeBuilder, DepTreeNode} from './DepTreeBuilder';
+import {DepTreeBuilder} from './DepTreeBuilder';
+import {DepTreeNode} from './DepTreeNode';
 
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
@@ -47,7 +47,7 @@ function assertTreeNode(depNode: DepTreeNode, testNode: AssertTreeNode) {
 
 function generateResolutionTest(getClock: () => SinonFakeTimers, config: GenerationConfig) {
   if (config.skip) {
-    // just to havew mention in log that we skipped test case
+    // just to have mention in log that we skipped test case
     it.skip(config.message, () => {});
     return;
   }
@@ -57,15 +57,12 @@ function generateResolutionTest(getClock: () => SinonFakeTimers, config: Generat
       resolvers.setItem(resolverName, new TestDepResolver(resolveConfig));
     });
     const builder = new DepTreeBuilder(resolvers);
-    const resolution = config.resolutionCalls.map(({ dependencies, resolverName }) => {
+    config.resolutionCalls.forEach(({ dependencies, resolverName }) => {
       return builder.resolveDependencies(dependencies, resolverName);
     });
-    Promise.all(resolution)
-      .then(() => {
-        const root = builder.getRoot();
+    builder.getRoot()
+      .then((root) => {
         assertTreeNode(root, config.root);
-        expect(root.children).to.be.not.empty;
-        //TODO add root assert
         done();
       })
       .catch(done);

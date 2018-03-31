@@ -6,6 +6,7 @@
   "main": "index.js",
   "scripts": {
     "build": "rm -rf build && tslint -p . && tsc -p tsconfig.prod.json",
+    "mocha": "mocha -r ts-node/register",
     "test": "mocha -r ts-node/register src/**/*.spec.ts"
   },
   "author": "",

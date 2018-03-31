@@ -2,7 +2,7 @@ import Promise from 'bluebird';
 import {readFile, writeFile} from 'fs';
 import map from 'lodash/map';
 import noop from 'lodash/noop';
-import {DepTreeNode} from '../utils/DepTreeBuilder';
+import {DepTreeNode} from '../utils/DepTreeNode';
 import {LockProvider} from './LockProvider';
 
 const readFileAsync = Promise.promisify(readFile);

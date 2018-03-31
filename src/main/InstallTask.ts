@@ -1,6 +1,6 @@
 import Promise from 'bluebird';
 import {chmodSync, constants, symlink} from 'fs';
-import {map, noop} from 'lodash';
+import {forEach, map, noop} from 'lodash';
 import mkdirp from 'mkdirp';
 import {join, resolve} from 'path';
 import {log} from 'util';
@@ -10,7 +10,8 @@ import {Namespace} from './Namespace';
 import {Project} from './Project';
 import {DependencyResolver} from './resolvers/DependencyResolver';
 import {Task} from './Task';
-import {DepTreeBuilder, DepTreeNode, logDepTree} from './utils/DepTreeBuilder';
+import {DepTreeBuilder} from './utils/DepTreeBuilder';
+import {DepTreeNode} from './utils/DepTreeNode';
 
 const symLinkAsync = Promise.promisify(symlink);
 
@@ -53,30 +54,30 @@ export class InstallTask extends Task {
   public exec(): Promise<any> {
     const resolvers = this._project.getNamespace<DependencyResolver>(this._resolversNamespace);
     const lockProviders = this._project.getNamespace<LockProvider>(this._lockProvidersNamespace);
-    const depTreeBuilder = new DepTreeBuilder(resolvers);
     const fromLock = this._project.getProperty('fromLock');
-    let root: DepTreeNode;
 
-    const rootPromise: Promise<any> = fromLock
-      ? lockProviders.getItem(this._lockProviderName).loadDepTree().then((lockRoot) => {
-        root = lockRoot;
-      })
-      : Promise.all(map(this._packages, (resolverDeps: {[key: string]: string}, resolverName: string) => {
-        return depTreeBuilder.resolveDependencies(resolverDeps, resolverName);
-      })).then(() => {
-        root = depTreeBuilder.getRoot();
-      });
+    const rootPromise: Promise<DepTreeNode> = fromLock
+      ? lockProviders.getItem(this._lockProviderName).loadDepTree()
+      : this._resolveRoot(resolvers, lockProviders);
 
     return rootPromise
-      .then(() => {
-        logDepTree(root, 0, 4);
-        if (fromLock) {
-          return Promise.resolve();
-        }
-        return lockProviders.getItem(this._lockProviderName).saveDepTree(root);
-      })
-      .then(() => {
+      .then((root: DepTreeNode) => {
         return this.__exctractDepNode(join(this._targetPath, this._modulePrefix), root, resolvers);
+      });
+  }
+
+  private _resolveRoot(
+    resolvers: Namespace<DependencyResolver>,
+    lockProviders: Namespace<LockProvider>,
+  ): Promise<DepTreeNode> {
+    const depTreeBuilder = new DepTreeBuilder(resolvers);
+    forEach(this._packages, (resolverDeps: {[key: string]: string}, resolverName: string) => {
+      return depTreeBuilder.resolveDependencies(resolverDeps, resolverName);
+    });
+    return depTreeBuilder.getRoot()
+      .then((root: DepTreeNode) => {
+        return lockProviders.getItem(this._lockProviderName).saveDepTree(root)
+          .then(() => root);
       });
   }
 

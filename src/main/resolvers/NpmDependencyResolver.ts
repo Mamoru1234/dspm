@@ -9,7 +9,7 @@ import {log} from 'util';
 
 import {ContentCache} from '../caches/ContentCache';
 import {FSContentCache} from '../caches/FSContentCache';
-import {DepTreeNode} from '../utils/DepTreeBuilder';
+import {DepTreeNode} from '../utils/DepTreeNode';
 import {AutoReleaseSemaphore} from '../utils/Semaphore';
 import {DependencyResolver, PackageMetaData} from './DependencyResolver';
 import ReadableStream = NodeJS.ReadableStream;
@@ -24,7 +24,7 @@ const encodePackagePart = (packageName: string, packageDescription: string) => {
   return `${_packageName}/${packageDescription}`;
 };
 
-// to avoid package/ prefix
+// needed to avoid package/ prefix
 const mapNpmTarHeader = (header: Headers) => {
   header.name = header.name.slice(8);
   return header;

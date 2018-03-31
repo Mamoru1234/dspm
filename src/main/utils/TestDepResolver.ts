@@ -3,7 +3,7 @@ import Promise from 'bluebird';
 import {DependencyResolver, PackageMetaData} from '../resolvers/DependencyResolver';
 import sinon from 'sinon';
 import forEach from 'lodash/forEach';
-import {DepTreeNode} from './DepTreeBuilder';
+import {DepTreeNode} from './DepTreeNode';
 import {log} from 'util';
 import {createTimer} from './TimerPromise';
 
