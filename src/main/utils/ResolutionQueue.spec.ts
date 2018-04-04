@@ -58,12 +58,17 @@ describe('utils/ResolutionQueue', () => {
         packageName: 'a',
         parent,
       },
+      {
+        packageDescription: 'retes',
+        packageName: 'b',
+        parent,
+      },
     ];
     items.forEach((item) => {
       queue.addItem(item);
     });
     expect(queue.pullQueue()).to.be.eqls(items.slice(0, 2));
-    expect(queue.pullQueue()).to.be.eqls(items.slice(2, 3));
+    expect(queue.pullQueue()).to.be.eqls(items.slice(2, 4));
     expect(queue.pullQueue()).to.be.eqls(undefined);
   });
 });
