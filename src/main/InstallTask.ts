@@ -90,11 +90,7 @@ export class InstallTask extends Task {
         return Promise.resolve(null);
       }
       const resolver = resolvers.getItem(child.resolvedBy);
-      return resolver.extract(targetPath, child)
-        .then((folderName: string) => {
-          return binProvider.provideBinLinks(folderName, child)
-            .then(() => folderName);
-        })
+      return binProvider.extractNode(targetPath, child, resolver)
         .then((folderName: string) => {
           log(`Exctracted into ${folderName}`);
           return this.__exctractDepNode(join(folderName, this._modulePrefix), child, binProvider, resolvers);
