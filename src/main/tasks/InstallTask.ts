@@ -3,14 +3,14 @@ import {forEach, map} from 'lodash';
 import {join, resolve} from 'path';
 import {log} from 'util';
 
-import {LockProvider} from './caches/LockProvider';
-import {Namespace} from './Namespace';
-import {Project} from './Project';
-import {DependencyResolver} from './resolvers/DependencyResolver';
-import {Task} from './Task';
-import {DepTreeBuilder} from './utils/DepTreeBuilder';
-import {DepTreeNode} from './utils/DepTreeNode';
-import {BinProvider} from './utils/package/BinProvider';
+import {LockProvider} from '../caches/LockProvider';
+import {Namespace} from '../Namespace';
+import {Project} from '../Project';
+import {DependencyResolver} from '../resolvers/DependencyResolver';
+import {Task} from '../Task';
+import {DepTreeBuilder} from '../utils/DepTreeBuilder';
+import {DepTreeNode} from '../utils/DepTreeNode';
+import {BinProvider} from '../utils/package/BinProvider';
 
 export class InstallTask extends Task {
   private _packages: {[key: string]: {[key: string]: string}} = {};

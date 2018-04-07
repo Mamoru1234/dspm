@@ -3,9 +3,9 @@ import {homedir} from 'os';
 import {join} from 'path';
 
 import {FSLockProvider} from '../caches/FSLockProvider';
-import {createInstallTask} from '../InstallTask';
 import {Project} from '../Project';
 import {NpmDependencyResolver} from '../resolvers/NpmDependencyResolver';
+import {createInstallTask} from '../tasks/InstallTask';
 
 export function applyJSProjectPlugin(project: Project) {
   const cachePath = project.getProperty('cache:path', join(homedir(), '.cache', 'dspm'));

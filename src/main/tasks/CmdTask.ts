@@ -1,9 +1,9 @@
 import Promise from 'bluebird';
 import merge from 'lodash/merge';
 import size from 'lodash/size';
-import {Project} from './Project';
-import {Task} from './Task';
-import {executeCommand} from './utils/CmdUtils';
+import {Project} from '../Project';
+import {Task} from '../Task';
+import {executeCommand} from '../utils/CmdUtils';
 
 export class CmdTask extends Task {
   private _command: string = '';
