@@ -5,6 +5,7 @@ import {join} from 'path';
 import {FSLockProvider} from '../caches/FSLockProvider';
 import {Project} from '../Project';
 import {NpmDependencyResolver} from '../resolvers/NpmDependencyResolver';
+import {createCleanTask} from '../tasks/CleanTask';
 import {createInstallTask} from '../tasks/InstallTask';
 
 export function applyJSProjectPlugin(project: Project) {
@@ -19,7 +20,12 @@ export function applyJSProjectPlugin(project: Project) {
   const packageJson = require(join(project.getProjectPath(), 'package.json'));
   const dependencies = merge({}, packageJson.dependencies, packageJson.devDependencies);
 
+  createCleanTask(project, 'cleanModules', (task) => task
+    .clean('node_modules'),
+  );
+
   createInstallTask(project, 'install', (task) => task
-    .dependencies('default', dependencies),
+    .dependencies('default', dependencies)
+    .dependsOn('cleanModules'),
   );
 }

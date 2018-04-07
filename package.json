@@ -22,6 +22,7 @@
     "@types/node": "^9.4.6",
     "@types/request": "^2.47.0",
     "@types/request-promise": "^4.1.41",
+    "@types/rimraf": "^2.0.2",
     "@types/semver": "^5.5.0",
     "@types/sinon": "^4.3.0",
     "@types/sinon-chai": "^2.7.29",
@@ -43,6 +44,7 @@
     "nconf": "^0.10.0",
     "request": "^2.83.0",
     "request-promise": "^4.2.2",
+    "rimraf": "^2.6.2",
     "semver": "^5.5.0",
     "tar-fs": "^1.16.0"
   }

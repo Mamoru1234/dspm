@@ -40,10 +40,7 @@ export class BinProvider {
     chain = chain.then(() => resolver.extract(targetPath, node));
     chain = this._addToChain(targetPath, chain, scripts, 'install');
     chain = chain.then((folder) => {
-      if (!folder) {
-        log(`Fuck in links for ${targetPath}`);
-      }
-      return this._provideBinLinks(targetPath, node).then(() => folder);
+      return this._provideBinLinks(folder, node).then(() => folder);
     });
     return chain;
   }

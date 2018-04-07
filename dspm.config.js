@@ -1,42 +1,24 @@
-const { createInstallTask } = require('./build/dist/main/InstallTask');
-const { createCmdTask } = require('./build/dist/main/CmdTask');
+const { join } = require('path');
+const { createInstallTask } = require('./build/dist/main/tasks/InstallTask');
+const { createCleanTask } = require('./build/dist/main/tasks/CleanTask');
 const { applyJSProjectPlugin } = require('./build/dist/main/plugins/JSProjectPlugin');
+const { FSLockProvider } = require('./build/dist/main/caches/FSLockProvider');
 
 module.exports = (project) => {
   applyJSProjectPlugin(project);
 
-  createCmdTask(project, 'a', (task) => task
-    .command(`sleep 1s && echo "$HOME"`)
+  const lockProviders = project.ensureNameSpace('lock_providers');
+  lockProviders.setItem('prod', new FSLockProvider(join(project.getProjectPath(), 'dspm.prod.lock.json')));
+
+
+  createCleanTask(project, 'clean', (task) => task
+    .clean('build/dist/node_modules')
   );
 
-  createCmdTask(project, 'b', (task) => task
-    .dependsOn('a')
-    .command(`sleep 1s`)
+  createInstallTask(project, 'installDist', (task) => task
+    .dependsOn('clean')
+    .lockProvider('prod')
+    .dependencies('default', require('./package').dependencies)
+    .targetPath('./build/dist'),
   );
-
-  createCmdTask(project, 'c', (task) => task
-    .command(`sleep 1s`)
-    .dependsOn('a')
-  );
-
-  createCmdTask(project, 'd', (task) => {
-    task.dependsOn('c');
-    task.command(`sleep 1s`);
-  });
-
-  createCmdTask(project, 'e', (task) => task
-    .dependsOn('d')
-    .dependsOn('b')
-    .command('echo DONE')
-  );
-
-  createCmdTask(project, 'clean', (task) => {
-    task.command(`rm -rf build/dist/node_modules`);
-  });
-
-  createInstallTask(project, 'installDist', (task) => {
-    task.dependsOn('clean');
-    task.dependencies('default', require('./package').dependencies);
-    task.targetPath('./build/dist');
-  });
 };
