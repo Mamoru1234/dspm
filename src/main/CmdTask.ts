@@ -1,15 +1,21 @@
 import Promise from 'bluebird';
-import {spawn} from 'child_process';
-import {log} from 'util';
+import merge from 'lodash/merge';
+import size from 'lodash/size';
 import {Project} from './Project';
-import { Task } from './Task';
+import {Task} from './Task';
+import {executeCommand} from './utils/CmdUtils';
 
-// FIXME: CmdTask should spawn shell to provide shell syntax
 export class CmdTask extends Task {
   private _command: string = '';
+  private _userEnv: {[key: string]: string} = {};
 
   public command(command: string): CmdTask {
     this._command = command;
+    return this;
+  }
+
+  public env(envKey: string, envValue: string): CmdTask {
+    this._userEnv[envKey] = envValue;
     return this;
   }
 
@@ -17,19 +23,14 @@ export class CmdTask extends Task {
     if (!this.command) {
       return Promise.resolve();
     }
-    return new Promise((res, rej): void => {
-      log(this._command);
-      const [command, ...args] = this._command.split(' ');
-      const proc = spawn(command, args);
-      proc.on('error', (err: any) => {
-        rej(err);
-      });
-      proc.stdout.pipe(process.stdout);
-      proc.stderr.pipe(process.stderr);
-      proc.on('exit', () => {
-        res();
-      });
-    });
+
+    if (size(this._userEnv) !== 0) {
+      // execute with custom env
+      const env = merge({}, process.env, this._userEnv);
+      return executeCommand(this._command, { env });
+    }
+
+    return executeCommand(this._command);
   }
 }
 

@@ -5,9 +5,8 @@ const { applyJSProjectPlugin } = require('./build/dist/main/plugins/JSProjectPlu
 module.exports = (project) => {
   applyJSProjectPlugin(project);
 
-  console.log(project.getProperty('fromLock'), typeof project.getProperty('fromLock'));
   createCmdTask(project, 'a', (task) => task
-    .command(`sleep 1s`)
+    .command(`sleep 1s && echo "$HOME"`)
   );
 
   createCmdTask(project, 'b', (task) => task

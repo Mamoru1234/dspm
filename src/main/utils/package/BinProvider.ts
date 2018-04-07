@@ -6,6 +6,11 @@ import {join} from 'path';
 import {log} from 'util';
 import {DepTreeNode} from '../DepTreeNode';
 
+/*
+* TODO
+* consider https://github.com/npm/cmd-shim for win support
+* */
+
 const symLinkAsync = Promise.promisify(symlink);
 
 export class BinProvider {
