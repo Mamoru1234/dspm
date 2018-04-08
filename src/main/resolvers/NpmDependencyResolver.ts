@@ -59,7 +59,9 @@ export class NpmDependencyResolver implements DependencyResolver {
           if (!isInCache) {
             return this.__extractFromRegistry(distFolder, node);
           }
-          return this.__extract(distFolder, this._modulesCache!!.getItem(itemKey));
+          return this._modulesCache!!.getItem(itemKey).then((stream) => {
+            return this.__extract(distFolder, stream);
+          });
         });
     });
   }
@@ -75,17 +77,23 @@ export class NpmDependencyResolver implements DependencyResolver {
     const itemKey = `${node.packageName}#${node.packageVersion}`;
     let moduleStream: any = originalGet(node.options.dist.tarball);
 
-    if (this._modulesCache) {
-      moduleStream = moduleStream.pipe(new ChainedWriteStream(this._modulesCache.setItem(itemKey)));
+    if (!this._modulesCache) {
+      return this.__extract(distFolder, moduleStream);
     }
 
-    return this.__extract(distFolder, moduleStream);
+    return this._modulesCache.setItem(itemKey).then((cacheStream) => {
+      moduleStream = moduleStream.pipe(new ChainedWriteStream(cacheStream));
+      return this.__extract(distFolder, moduleStream);
+    });
   }
 
   private __extract(distFolder: string, moduleStream: ReadableStream): Promise<string> {
     return new Promise((res, rej) => {
       moduleStream
         .pipe(gunzip())
+        .on('error', (err: any) => {
+          rej(err);
+        })
         .pipe(extract(distFolder, { map: mapNpmTarHeader }))
         .on('error', (err: any) => {
           rej(err);

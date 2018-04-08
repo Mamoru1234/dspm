@@ -32,22 +32,31 @@ export class Task {
 
   public run(): Promise<any> {
     if (!this._execution) {
-      this._execution = this.execDeps().then(() => {
-        if (this.upToDate()) {
-            return Promise.resolve();
-        }
-        log(`Executing ${this.name}`);
-        return this.exec();
-      }).catch((e: any) => {
-        log(e);
-      });
+      this._execution = this.execDeps()
+        .then(() => {
+          if (this.upToDate()) {
+              return Promise.resolve();
+          }
+          log(`Executing ${this.name}`);
+          return this.exec();
+        })
+        .catch((e: any) => {
+          /* tslint:disable */
+          console.error('');
+          console.error('===============');
+          console.error('|||||||||||||||');
+          console.error('///////////////');
+          console.error(e);
+          console.error('');
+          process.exit(-1);
+          /* tslint:enable */
+        });
     }
     return this._execution;
   }
 
   public exec(): Promise<any> {
-    // tslint:disable-next-line
-    console.log(`Exec: ${this.name}`);
+    log(`Exec: ${this.name}`);
     return Promise.resolve();
   }
 }

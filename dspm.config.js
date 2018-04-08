@@ -10,7 +10,6 @@ module.exports = (project) => {
   const lockProviders = project.ensureNameSpace('lock_providers');
   lockProviders.setItem('prod', new FSLockProvider(join(project.getProjectPath(), 'dspm.prod.lock.json')));
 
-
   createCleanTask(project, 'clean', (task) => task
     .clean('build/dist/node_modules')
   );

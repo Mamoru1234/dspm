@@ -11,12 +11,12 @@ export class FSContentCache implements ContentCache {
     return Promise.resolve(existsSync(this._getItemPath(itemKey)));
   }
 
-  public getItem(itemKey: string): NodeJS.ReadableStream {
-    return createReadStream(this._getItemPath(itemKey));
+  public getItem(itemKey: string): Promise<NodeJS.ReadableStream> {
+    return Promise.resolve(createReadStream(this._getItemPath(itemKey)));
   }
 
-  public setItem(itemKey: string): NodeJS.WritableStream {
-    return createWriteStream(this._getItemPath(itemKey));
+  public setItem(itemKey: string): Promise<NodeJS.WritableStream> {
+    return Promise.resolve(createWriteStream(this._getItemPath(itemKey)));
   }
 
   private _getItemPath(itemKey: string): string {

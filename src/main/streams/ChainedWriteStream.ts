@@ -11,4 +11,8 @@ export class ChainedWriteStream extends Transform {
     this.push(chunk, encoding);
     this._source.write(chunk, encoding, callback);
   }
+
+  public _flush(cb: any) {
+    this._source.end(cb);
+  }
 }
