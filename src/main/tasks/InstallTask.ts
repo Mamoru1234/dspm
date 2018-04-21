@@ -13,6 +13,28 @@ import {DepTreeNode} from '../utils/DepTreeNode';
 import {BinProvider} from '../utils/package/BinProvider';
 
 export class InstallTask extends Task {
+
+  public static create(
+    project: Project,
+    name: string,
+    configurator: (task: InstallTask) => void,
+  ): InstallTask {
+    const task = new InstallTask(name, project);
+    configurator(task);
+    project.setTask(name, task);
+    return task;
+  }
+
+  public static refine(
+    project: Project,
+    name: string,
+    configurator: (task: InstallTask) => void,
+  ): InstallTask {
+    const task = project.getTask(name) as InstallTask;
+    configurator(task);
+    return task;
+  }
+
   private _packages: {[key: string]: {[key: string]: string}} = {};
   private _modulePrefix: string = 'node_modules';
   private _resolversNamespace = 'resolvers';
@@ -97,23 +119,4 @@ export class InstallTask extends Task {
         });
     }));
   }
-}
-
-export function createInstallTask(
-  project: Project,
-  name: string,
-  configurator: (task: InstallTask) => void): InstallTask {
-  const task = new InstallTask(name, project);
-  configurator(task);
-  project.setTask(name, task);
-  return task;
-}
-
-export function refineInstallTask(
-  project: Project,
-  name: string,
-  configurator: (task: InstallTask) => void): InstallTask {
-  const task = project.getTask(name) as InstallTask;
-  configurator(task);
-  return task;
 }

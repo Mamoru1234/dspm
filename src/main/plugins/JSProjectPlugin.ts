@@ -5,8 +5,8 @@ import {join} from 'path';
 import {FSLockProvider} from '../caches/FSLockProvider';
 import {Project} from '../Project';
 import {NpmDependencyResolver} from '../resolvers/NpmDependencyResolver';
-import {createCleanTask} from '../tasks/CleanTask';
-import {createInstallTask} from '../tasks/InstallTask';
+import {CleanTask} from '../tasks/CleanTask';
+import {InstallTask} from '../tasks/InstallTask';
 
 export function applyJSProjectPlugin(project: Project) {
   const cachePath = project.getProperty('cache:path', join(homedir(), '.cache', 'dspm'));
@@ -20,11 +20,11 @@ export function applyJSProjectPlugin(project: Project) {
   const packageJson = require(join(project.getProjectPath(), 'package.json'));
   const dependencies = merge({}, packageJson.dependencies, packageJson.devDependencies);
 
-  createCleanTask(project, 'cleanModules', (task) => task
+  CleanTask.create(project, 'cleanModules', (task) => task
     .clean('node_modules'),
   );
 
-  createInstallTask(project, 'install', (task) => task
+  InstallTask.create(project, 'install', (task) => task
     .dependencies('default', dependencies)
     .dependsOn('cleanModules'),
   );

@@ -6,6 +6,18 @@ import {Task} from '../Task';
 import {executeCommand} from '../utils/CmdUtils';
 
 export class CmdTask extends Task {
+
+  public static create(
+    project: Project,
+    name: string,
+    configurator: (task: CmdTask) => void,
+  ): CmdTask {
+    const task = new CmdTask(name, project);
+    configurator(task);
+    project.setTask(name, task);
+    return task;
+  }
+
   private _command: string = '';
   private _userEnv: {[key: string]: string} = {};
 
@@ -32,11 +44,4 @@ export class CmdTask extends Task {
 
     return executeCommand(this._command);
   }
-}
-
-export function createCmdTask(project: Project, name: string, configurator: (task: CmdTask) => void): CmdTask {
-  const task = new CmdTask(name, project);
-  configurator(task);
-  project.setTask(name, task);
-  return task;
 }

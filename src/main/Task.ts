@@ -22,8 +22,8 @@ export class Task {
     return this;
   }
 
-  public upToDate() {
-    return false;
+  public upToDate(): Promise<boolean> {
+    return Promise.resolve(false);
   }
 
   public execDeps(): Promise<any> {
@@ -33,9 +33,11 @@ export class Task {
   public run(): Promise<any> {
     if (!this._execution) {
       this._execution = this.execDeps()
-        .then(() => {
-          if (this.upToDate()) {
-              return Promise.resolve();
+        .then(() => this.upToDate())
+        .then((isUpToDate: boolean) => {
+          if (isUpToDate) {
+            log(`${this.name} is up to date`);
+            return Promise.resolve();
           }
           log(`Executing ${this.name}`);
           return this.exec();
