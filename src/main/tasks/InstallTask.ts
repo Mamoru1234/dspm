@@ -73,11 +73,10 @@ export class InstallTask extends Task {
   public exec(): Promise<any> {
     const resolvers = this._project.getNamespace<DependencyResolver>(this._resolversNamespace);
     const lockProviders = this._project.getNamespace<LockProvider>(this._lockProvidersNamespace);
-    const fromLock = this._project.getProperty('fromLock');
 
-    const rootPromise: Promise<DepTreeNode> = fromLock
-      ? lockProviders.getItem(this._lockProviderName).loadDepTree()
-      : this._resolveRoot(resolvers, lockProviders);
+    const lockProvider = lockProviders.getItem(this._lockProviderName);
+
+    const rootPromise: Promise<DepTreeNode> = this._getDepTree(lockProvider);
 
     return rootPromise
       .then((root: DepTreeNode) => {
@@ -87,17 +86,35 @@ export class InstallTask extends Task {
       });
   }
 
+  private _getDepTree(
+    lockProvider: LockProvider,
+  ) {
+    const updateLock = this._project.getProperty('updateLock', false);
+
+    if (updateLock) {
+      return this._resolveRoot(lockProvider);
+    }
+
+    return lockProvider.exists()
+      .then((lockExists: boolean) => {
+        if (lockExists) {
+          return lockProvider.loadDepTree();
+        }
+        return this._resolveRoot(lockProvider);
+      });
+  }
+
   private _resolveRoot(
-    resolvers: Namespace<DependencyResolver>,
-    lockProviders: Namespace<LockProvider>,
+    lockProvider: LockProvider,
   ): Promise<DepTreeNode> {
+    const resolvers = this._project.getNamespace<DependencyResolver>(this._resolversNamespace);
     const depTreeBuilder = new DepTreeBuilder(resolvers);
     forEach(this._packages, (resolverDeps: {[key: string]: string}, resolverName: string) => {
       return depTreeBuilder.resolveDependencies(resolverDeps, resolverName);
     });
     return depTreeBuilder.getRoot()
       .then((root: DepTreeNode) => {
-        return lockProviders.getItem(this._lockProviderName).saveDepTree(root)
+        return lockProvider.saveDepTree(root)
           .then(() => root);
       });
   }

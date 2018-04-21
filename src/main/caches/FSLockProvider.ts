@@ -1,5 +1,5 @@
 import Promise from 'bluebird';
-import {readFile, writeFile} from 'fs';
+import {existsSync, readFile, writeFile} from 'fs';
 import map from 'lodash/map';
 import noop from 'lodash/noop';
 import {DepTreeNode} from '../utils/DepTreeNode';
@@ -20,6 +20,10 @@ interface PureDepTreeNode {
 export class FSLockProvider implements LockProvider {
   constructor(private _lockPath: string) {
     this._serializeNode = this._serializeNode.bind(this);
+  }
+
+  public exists(): Promise<boolean> {
+    return Promise.resolve(existsSync(this._lockPath));
   }
 
   public loadDepTree(): Promise<DepTreeNode> {

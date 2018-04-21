@@ -11,12 +11,7 @@ rm -rfv "$TARGET_PATH/dspm"
 echo "installing dspm..."
 
 mkdir -p "$TARGET_PATH/.dspm/dist"
-
 tar -xzf ./build/dspm.tar.gz -C "$TARGET_PATH/.dspm/dist"
 
-DSPM_BIN_PATH="$TARGET_PATH/.dspm/dist/bin/dspm.js"
-
-chmod +x "$DSPM_BIN_PATH"
-ln -s "$DSPM_BIN_PATH" "$TARGET_PATH/dspm"
-
-echo "Installed"
+cp ./build/dspm "$TARGET_PATH/dspm"
+chmod +x "$TARGET_PATH/dspm"
