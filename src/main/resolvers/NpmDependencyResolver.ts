@@ -1,9 +1,11 @@
 import Promise from 'bluebird';
 import gunzip from 'gunzip-maybe';
+import { has } from 'lodash';
 import { sync as mkDirSync } from 'mkdirp';
 import { join } from 'path';
 import { get as originalGet } from 'request';
 import { get } from 'request-promise';
+import {maxSatisfying} from 'semver';
 import {extract, Headers} from 'tar-fs';
 import {log} from 'util';
 
@@ -15,15 +17,14 @@ import {AutoReleaseSemaphore} from '../utils/Semaphore';
 import {DependencyResolver, PackageMetaData} from './DependencyResolver';
 import ReadableStream = NodeJS.ReadableStream;
 
-// temporal fix caused by bug in npm registry which is related to scoped packages
-const encodePackagePart = (packageName: string, packageDescription: string) => {
-  const charCode = packageDescription.charCodeAt(0);
-  const _packageName = packageName.replace('/', '%2F');
-  if (_packageName[0] === '@' && charCode > 47 && charCode < 58) {
-    return `${_packageName}/=${packageDescription}`;
+function findInVersions(versions: any, packageDescription: string, packageName: string) {
+  const keys = Object.keys(versions);
+  const satisfiedVersion = maxSatisfying(keys, packageDescription);
+  if (satisfiedVersion === null) {
+    throw new Error(`No satisfied version for ${packageName}[${packageDescription}] in ${JSON.stringify(keys)}`);
   }
-  return `${_packageName}/${packageDescription}`;
-};
+  return satisfiedVersion;
+}
 
 // needed to avoid package/ prefix
 const mapNpmTarHeader = (header: Headers) => {
@@ -32,9 +33,10 @@ const mapNpmTarHeader = (header: Headers) => {
 };
 
 export class NpmDependencyResolver implements DependencyResolver {
-  private networkLock: AutoReleaseSemaphore = new AutoReleaseSemaphore(32);
-  private fileLock: AutoReleaseSemaphore = new AutoReleaseSemaphore(16);
-  private _modulesCache?: ContentCache;
+  private _networkLock: AutoReleaseSemaphore = new AutoReleaseSemaphore(32);
+  private _fileLock: AutoReleaseSemaphore = new AutoReleaseSemaphore(16);
+  private readonly _modulesCache?: ContentCache;
+  private _packageRequests: any = {};
 
   constructor(
     _cacheFolder: string,
@@ -47,7 +49,7 @@ export class NpmDependencyResolver implements DependencyResolver {
   }
 
   public extract(targetFolder: string, node: DepTreeNode): Promise<string> {
-    return this.fileLock.acquire(() => {
+    return this._fileLock.acquire(() => {
       const itemKey = `${node.packageName}#${node.packageVersion}`;
       const distFolder = join(targetFolder, node.packageName!!);
       if (!this._modulesCache) {
@@ -67,7 +69,7 @@ export class NpmDependencyResolver implements DependencyResolver {
   }
 
   public getMetaData(packageName: string, packageDescription: string): Promise<PackageMetaData> {
-    return this.networkLock.acquire(() => {
+    return this._networkLock.acquire(() => {
       return this.__getMetaData(packageName, packageDescription);
     });
   }
@@ -109,18 +111,34 @@ export class NpmDependencyResolver implements DependencyResolver {
 
   private __getMetaData(packageName: string, packageDescription: string): Promise<PackageMetaData> {
     log(`Get Metadata: ${packageName}[${packageDescription}]`);
-    return get(`${this.repositoryURL}/${encodePackagePart(packageName, packageDescription)}`).then((res) => {
+    return this.__getPackageData(packageName).then((res: any) => {
       const response = JSON.parse(res);
+      // TODO handle latest version
+      const { versions } = response;
+      const satisfiedVersion = has(response['dist-tags'], packageDescription)
+        ? response['dist-tags'][packageDescription]
+        : findInVersions(versions, packageDescription, packageName);
+      const version = versions[satisfiedVersion];
       return {
-        dependencies: response.dependencies,
-        name: response.name,
+        dependencies: version.dependencies,
+        name: version.name,
         options: {
-          bin: response.bin,
-          dist: response.dist,
-          scripts: response.scripts,
+          bin: version.bin,
+          dist: version.dist,
+          scripts: version.scripts,
         },
-        version: response.version,
+        version: satisfiedVersion,
       };
-    }) as any;
+    });
+  }
+
+  private __getPackageData(packageName: string) {
+    if (has(this._packageRequests, packageName)) {
+      return this._packageRequests[packageName];
+    }
+    const _packageName = packageName.replace('/', '%2F');
+    const request = get(`${this.repositoryURL}/${_packageName}`);
+    this._packageRequests[packageName] = request;
+    return request;
   }
 }
