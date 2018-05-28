@@ -21,4 +21,6 @@ cd ../../
 #envsubst < scripts/dspm > build/dspm
 #unset DSPM_VERSION
 
+cp scripts/dspm build/dspm
+
 chmod +x ../dspm
