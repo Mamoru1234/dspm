@@ -16,8 +16,9 @@ tar -zcvf ../dspm.tar.gz * ../../package.json
 
 cd ../../
 
-export DSPM_VERSION=$(git describe --abbrev=0 --tags)
-envsubst "${DSPM_VERSION}" < scripts/dspm > build/dspm
-unset DSPM_VERSION
+# TODO fix envsubst
+#export DSPM_VERSION=$(git describe --abbrev=0 --tags)
+#envsubst < scripts/dspm > build/dspm
+#unset DSPM_VERSION
 
 chmod +x ../dspm

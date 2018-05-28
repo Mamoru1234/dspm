@@ -5,7 +5,6 @@ export interface ResolutionQueueItem {
   parent: DepTreeNode;
   packageName: string;
   packageDescription: any;
-  resolverName?: string;
 }
 
 export class ResolutionQueue {

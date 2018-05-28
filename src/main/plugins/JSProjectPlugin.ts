@@ -10,9 +10,9 @@ import {InstallTask} from '../tasks/InstallTask';
 
 export function applyJSProjectPlugin(project: Project) {
   const cachePath = project.getProperty('cache:path', join(homedir(), '.cache', 'dspm'));
-  const resolver = new NpmDependencyResolver(cachePath);
+  const resolver = new NpmDependencyResolver('npm', cachePath);
   const resolvers = project.ensureNameSpace('resolvers');
-  resolvers.setItem('default', resolver);
+  resolvers.setItem('npm', resolver);
 
   const lockProviders = project.ensureNameSpace('lock_providers');
   lockProviders.setItem('default', new FSLockProvider(join(project.getProjectPath(), 'dspm.lock.json')));
@@ -25,7 +25,7 @@ export function applyJSProjectPlugin(project: Project) {
   );
 
   InstallTask.create(project, 'install', (task) => task
-    .dependencies('default', dependencies)
+    .dependencies(dependencies)
     .dependsOn('cleanModules'),
   );
 }

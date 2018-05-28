@@ -5,6 +5,8 @@ import {log} from 'util';
 import {Namespace} from '../Namespace';
 import {DependencyResolver} from '../resolvers/DependencyResolver';
 import {DepTreeNode} from './DepTreeNode';
+import {PackageDescription} from './package/PackageDescription';
+import {convertDependenciesMap} from './package/PackageJsonParse';
 import {ResolutionQueue, ResolutionQueueItem} from './ResolutionQueue';
 
 export function logDepTree(node: DepTreeNode, level: number, depth: number) {
@@ -65,14 +67,13 @@ export class DepTreeBuilder {
   }
 
   public resolveDependencies(
-    dependencies: {[key: string]: any},
-    resolverName: string): void {
+    dependencies: {[key: string]: PackageDescription},
+  ): void {
     forEach(dependencies, (packageDescription: any, packageName: string) => {
       this._queue.addItem({
         packageDescription,
         packageName,
         parent: this._root,
-        resolverName,
       });
     });
   }
@@ -84,22 +85,24 @@ export class DepTreeBuilder {
     }
     return Promise.map(queueLevel, (value: ResolutionQueueItem) => {
       const { parent, packageName, packageDescription } = value;
-      const satisfiedNode = semverLookup(parent, packageName, packageDescription);
-      if (satisfiedNode) {
-        return Promise.resolve(null);
+      if (packageDescription.semVersion !== undefined) {
+        const satisfiedNode = semverLookup(parent, packageName, packageDescription.semVersion);
+        if (satisfiedNode) {
+          return Promise.resolve(null);
+        }
       }
-      const _resolverName = value.resolverName || 'default';
-      const resolver = this._resolvers.getItem(_resolverName);
-      return resolver.getMetaData(packageName, packageDescription).then((childMeta) => {
-        const target = isInRoot(this._root, packageName) ? parent : this._root;
+      const resolver = this._resolvers.getItem(packageDescription.resolverName);
+      return resolver.getMetaData(packageDescription).then((childMeta) => {
+        const shouldBeInlined = !packageDescription.semVersion || isInRoot(this._root, packageName);
+        const target = shouldBeInlined ? parent : this._root;
         const node: DepTreeNode = {
           children: [],
-          dependencies: childMeta.dependencies,
+          dependencies: convertDependenciesMap(this._resolvers, childMeta.dependencies),
           options: childMeta.options,
           packageName: childMeta.name,
           packageVersion: childMeta.version,
           parent: target,
-          resolvedBy: _resolverName,
+          resolvedBy: packageDescription.resolverName,
         };
         target.children.push(node);
         return node;

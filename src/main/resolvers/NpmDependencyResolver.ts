@@ -13,6 +13,7 @@ import {ContentCache} from '../caches/ContentCache';
 import {FSContentCache} from '../caches/FSContentCache';
 import {ChainedWriteStream} from '../streams/ChainedWriteStream';
 import {DepTreeNode} from '../utils/DepTreeNode';
+import {PackageDescription} from '../utils/package/PackageDescription';
 import {AutoReleaseSemaphore} from '../utils/Semaphore';
 import {DependencyResolver, PackageMetaData} from './DependencyResolver';
 import ReadableStream = NodeJS.ReadableStream;
@@ -28,7 +29,8 @@ function findInVersions(versions: any, packageDescription: string, packageName: 
 
 // needed to avoid package/ prefix
 const mapNpmTarHeader = (header: Headers) => {
-  header.name = header.name.slice(8);
+  const packageNameInd = header.name.indexOf('/');
+  header.name = header.name.slice(packageNameInd);
   return header;
 };
 
@@ -39,6 +41,7 @@ export class NpmDependencyResolver implements DependencyResolver {
   private _packageRequests: any = {};
 
   constructor(
+    private _resolverName: string,
     _cacheFolder: string,
     private repositoryURL: string = 'https://registry.npmjs.org') {
     if (_cacheFolder !== 'null') {
@@ -46,6 +49,17 @@ export class NpmDependencyResolver implements DependencyResolver {
       mkDirSync(_dirPath);
       this._modulesCache = new FSContentCache(_dirPath);
     }
+  }
+
+  public parseDependencyItem(dependencyKey: string, dependencyDescription: string): PackageDescription {
+    return {
+      resolverArgs: {
+        packageName: dependencyKey,
+        packageVersion: dependencyDescription,
+      },
+      resolverName: this._resolverName,
+      semVersion: dependencyDescription,
+    };
   }
 
   public extract(targetFolder: string, node: DepTreeNode): Promise<string> {
@@ -68,9 +82,13 @@ export class NpmDependencyResolver implements DependencyResolver {
     });
   }
 
-  public getMetaData(packageName: string, packageDescription: string): Promise<PackageMetaData> {
+  public getMetaData(packageDescription: PackageDescription): Promise<PackageMetaData> {
     return this._networkLock.acquire(() => {
-      return this.__getMetaData(packageName, packageDescription);
+      const {
+        packageName,
+        packageVersion,
+      } = packageDescription.resolverArgs;
+      return this.__getMetaData(packageName, packageVersion);
     });
   }
 

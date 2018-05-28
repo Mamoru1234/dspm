@@ -3,6 +3,7 @@ import {existsSync, readFile, writeFile} from 'fs';
 import map from 'lodash/map';
 import noop from 'lodash/noop';
 import {DepTreeNode} from '../utils/DepTreeNode';
+import {PackageDescription} from '../utils/package/PackageDescription';
 import {LockProvider} from './LockProvider';
 
 const readFileAsync = Promise.promisify(readFile);
@@ -11,7 +12,7 @@ const writeFileAsync = Promise.promisify(writeFile);
 interface PureDepTreeNode {
   packageName?: string;
   packageVersion?: string;
-  dependencies?: {[key: string]: string};
+  dependencies?: {[key: string]: PackageDescription};
   options?: any;
   resolvedBy?: string;
   children: DepTreeNode[];

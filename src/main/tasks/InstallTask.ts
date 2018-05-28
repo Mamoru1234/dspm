@@ -1,5 +1,5 @@
 import Promise from 'bluebird';
-import {forEach, map} from 'lodash';
+import {map} from 'lodash';
 import {join, resolve} from 'path';
 import {log} from 'util';
 
@@ -11,6 +11,8 @@ import {Task} from '../Task';
 import {DepTreeBuilder} from '../utils/DepTreeBuilder';
 import {DepTreeNode} from '../utils/DepTreeNode';
 import {BinProvider} from '../utils/package/BinProvider';
+import {PackageDescription} from '../utils/package/PackageDescription';
+import {convertDependenciesMap} from '../utils/package/PackageJsonParse';
 
 export class InstallTask extends Task {
 
@@ -35,7 +37,7 @@ export class InstallTask extends Task {
     return task;
   }
 
-  private _packages: {[key: string]: {[key: string]: string}} = {};
+  private _packages: {[key: string]: PackageDescription} = {};
   private _modulePrefix: string = 'node_modules';
   private _resolversNamespace = 'resolvers';
   private _lockProvidersNamespace = 'lock_providers';
@@ -65,8 +67,10 @@ export class InstallTask extends Task {
     return this;
   }
 
-  public dependencies(resolver: string, description: {[key: string]: string}) {
-    this._packages[resolver] = Object.assign({}, description);
+  public dependencies(description: {[key: string]: any}) {
+    const resolvers = this._project.getNamespace<DependencyResolver>(this._resolversNamespace);
+    const parsedDependencies = convertDependenciesMap(resolvers, description);
+    Object.assign(this._packages, parsedDependencies);
     return this;
   }
 
@@ -109,9 +113,7 @@ export class InstallTask extends Task {
   ): Promise<DepTreeNode> {
     const resolvers = this._project.getNamespace<DependencyResolver>(this._resolversNamespace);
     const depTreeBuilder = new DepTreeBuilder(resolvers);
-    forEach(this._packages, (resolverDeps: {[key: string]: string}, resolverName: string) => {
-      return depTreeBuilder.resolveDependencies(resolverDeps, resolverName);
-    });
+    depTreeBuilder.resolveDependencies(this._packages);
     return depTreeBuilder.getRoot()
       .then((root: DepTreeNode) => {
         return lockProvider.saveDepTree(root)

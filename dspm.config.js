@@ -17,7 +17,7 @@ module.exports = (project) => {
   InstallTask.create(project, 'installDist', (task) => task
     .dependsOn('clean')
     .lockProvider('prod')
-    .dependencies('default', require('./package').dependencies)
+    .dependencies(require('./package').dependencies)
     .targetPath('./build/dist'),
   );
 };
