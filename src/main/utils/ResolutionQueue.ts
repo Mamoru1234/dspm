@@ -1,11 +1,11 @@
 import {findIndex} from 'lodash';
 import {DepTreeNode} from './DepTreeNode';
+import {PackageDescription} from './package/PackageDescription';
 
 export interface ResolutionQueueItem {
   parent: DepTreeNode;
   packageName: string;
-  packageDescription: any;
-  resolverName?: string;
+  packageDescription: PackageDescription;
 }
 
 export class ResolutionQueue {

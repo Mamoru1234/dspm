@@ -6,6 +6,7 @@ import forEach from 'lodash/forEach';
 import {DepTreeNode} from './DepTreeNode';
 import {log} from 'util';
 import {createTimer} from './TimerPromise';
+import {PackageDescription} from './package/PackageDescription';
 
 export interface ResolutionParam {
   time: number;
@@ -24,9 +25,14 @@ export class TestDepResolver implements DependencyResolver{
     throw new Error('this kind of resolver not designed for extract');
   }
 
-  getMetaData(packageName: string, packageDescription: any): Promise<PackageMetaData> {
-    log(packageName);
-    log(packageDescription);
+  getMetaData(packageDescription: PackageDescription): Promise<PackageMetaData> {
+    const resolverArgs = packageDescription.resolverArgs;
+    log(resolverArgs.packageName);
+    log(resolverArgs.packageVersion);
+    throw new Error('Unreached code');
+  }
+
+  parseDependencyItem(): PackageDescription {
     throw new Error('Unreached code');
   }
 
