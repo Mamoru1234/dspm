@@ -32,8 +32,15 @@ export class TestDepResolver implements DependencyResolver{
     throw new Error('Unreached code');
   }
 
-  parseDependencyItem(): PackageDescription {
-    throw new Error('Unreached code');
+  parseDependencyItem(dependencyKey: string, dependencyDescription: string): PackageDescription {
+    return {
+      resolverArgs: {
+        packageName: dependencyKey,
+        packageVersion: dependencyDescription,
+      },
+      resolverName: 'npm',
+      semVersion: dependencyDescription,
+    };
   }
 
   constructor(resolutionConfig: ResolutionParam[]) {
@@ -46,7 +53,7 @@ export class TestDepResolver implements DependencyResolver{
         options: {},
       };
       this.getMetadataStub
-        .withArgs(resolutionItem.name, resolutionItem.description)
+        .withArgs(resolutionItem.description)
         .callsFake(() => {
           return createTimer(resolutionItem.time, metaData)
         });

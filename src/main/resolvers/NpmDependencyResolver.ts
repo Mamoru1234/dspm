@@ -29,7 +29,8 @@ function findInVersions(versions: any, packageDescription: string, packageName: 
 
 // needed to avoid package/ prefix
 const mapNpmTarHeader = (header: Headers) => {
-  header.name = header.name.slice(8);
+  const packageNameInd = header.name.indexOf('/');
+  header.name = header.name.slice(packageNameInd);
   return header;
 };
 

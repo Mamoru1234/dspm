@@ -4,7 +4,7 @@ CWD=$(pwd)
 
 ensureArtifact () {
     if [ ! -d "$CWD/.dspm" ]; then
-        echo "Installing dspm version ${DSPM_VERSION}"
+        echo "Installing dspm version 0.1.4"
 
         wget -q "https://github.com/Mamoru1234/dspm/releases/download/${DSPM_VERSION}/dspm.tar.gz"
 
