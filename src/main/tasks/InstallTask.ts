@@ -37,11 +37,11 @@ export class InstallTask extends Task {
     return task;
   }
 
+  public _targetPath: string;
+  public _modulePrefix: string = 'node_modules';
   private _packages: {[key: string]: PackageDescription} = {};
-  private _modulePrefix: string = 'node_modules';
   private _resolversNamespace = 'resolvers';
   private _lockProvidersNamespace = 'lock_providers';
-  private _targetPath: string;
   private _lockProviderName = 'default';
 
   constructor(

@@ -5,7 +5,7 @@ import {Namespace} from './Namespace';
 import {Task} from './Task';
 
 export class Project {
-  private _tasks: {[key: string]: Task} = {};
+  private _tasks: {[key: string]: any} = {};
   private _namespaces: {[key: string]: Namespace<any>} = {};
 
   constructor(
@@ -45,7 +45,7 @@ export class Project {
     this._tasks[name] = task;
   }
 
-  public getTask(name: string) {
-    return this._tasks[name];
+  public getTask<T = Task>(name: string) {
+    return this._tasks[name] as T;
   }
 }

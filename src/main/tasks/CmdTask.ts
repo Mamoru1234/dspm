@@ -20,6 +20,7 @@ export class CmdTask extends Task {
 
   private _command: string = '';
   private _userEnv: {[key: string]: string} = {};
+  private _pathItems: string[] = [];
 
   public command(command: string): CmdTask {
     this._command = command;
@@ -31,14 +32,20 @@ export class CmdTask extends Task {
     return this;
   }
 
+  public addToPath(entry: string): CmdTask {
+    this._pathItems.push(entry);
+    return this;
+  }
+
   public exec(): Promise<any> {
     if (!this.command) {
       return Promise.resolve();
     }
 
-    if (size(this._userEnv) !== 0) {
+    if (size(this._userEnv) !== 0 || this._pathItems.length !== 0) {
       // execute with custom env
       const env = merge({}, process.env, this._userEnv);
+      env.PATH = `${this._pathItems.join(':')}:${env.PATH}`;
       return executeCommand(this._command, { env });
     }
 

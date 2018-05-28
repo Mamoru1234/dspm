@@ -1,3 +1,4 @@
+import forEach from 'lodash/forEach';
 import merge from 'lodash/merge';
 import {homedir} from 'os';
 import {join} from 'path';
@@ -7,6 +8,7 @@ import {Project} from '../Project';
 import {NpmDependencyResolver} from '../resolvers/NpmDependencyResolver';
 import {CleanTask} from '../tasks/CleanTask';
 import {InstallTask} from '../tasks/InstallTask';
+import {NpmScriptTask} from '../tasks/NpmScriptTask';
 
 export function applyJSProjectPlugin(project: Project) {
   const cachePath = project.getProperty('cache:path', join(homedir(), '.cache', 'dspm'));
@@ -28,4 +30,10 @@ export function applyJSProjectPlugin(project: Project) {
     .dependencies(dependencies)
     .dependsOn('cleanModules'),
   );
+
+  forEach(packageJson.scripts, (command: string, scriptName: string) => {
+    NpmScriptTask.create(project, scriptName, (task) => task
+      .command(command),
+    );
+  });
 }
