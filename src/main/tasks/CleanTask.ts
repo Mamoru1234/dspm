@@ -11,10 +11,8 @@ export class CleanTask extends Task {
   public static create(
     project: Project,
     name: string,
-    configurator: (task: CleanTask) => void,
   ) {
     const task = new CleanTask(name, project);
-    configurator(task);
     project.setTask(name, task);
     return task;
   }

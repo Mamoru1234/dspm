@@ -10,10 +10,8 @@ export class CmdTask extends Task {
   public static create(
     project: Project,
     name: string,
-    configurator: (task: CmdTask) => void,
   ): CmdTask {
     const task = new CmdTask(name, project);
-    configurator(task);
     project.setTask(name, task);
     return task;
   }

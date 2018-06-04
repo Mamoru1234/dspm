@@ -1,20 +1,10 @@
 #!/bin/bash
 
-if [ ! -d build/dist ]
-then
- echo "Please execute npm run build first"
- exit 1
-fi
+npm run build
 
 echo "Packaging deploy"
 
 node build/dist/bin/dspm.js distArchive --cache.path=null
-
-cd build/dist
-
-tar -zcvf ../dspm.tar.gz * ../../package.json
-
-cd ../../
 
 # TODO fix envsubst
 #export DSPM_VERSION=$(git describe --abbrev=0 --tags)

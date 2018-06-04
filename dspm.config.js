@@ -11,20 +11,19 @@ module.exports = (project) => {
   const lockProviders = project.ensureNameSpace('lock_providers');
   lockProviders.setItem('prod', new FSLockProvider(join(project.getProjectPath(), 'dspm.prod.lock.json')));
 
-  CleanTask.create(project, 'clean', (task) => task
-    .clean('build/dist/node_modules')
-  );
+  CleanTask.create(project, 'clean')
+    .clean('build/dist/node_modules');
 
-  InstallTask.create(project, 'installDist', (task) => task
+  InstallTask.create(project, 'installDist')
     .dependsOn('clean')
     .lockProvider('prod')
     .dependencies(require('./package').dependencies)
-    .targetPath('./build/dist'),
-  );
+    .targetPath('./build/dist');
 
   ArchiveTask.create(project, 'distArchive')
     .from('./build/dist')
     .from('.', { entries: ['package.json'] })
-    .into('build/dspm.tar')
+    .into('build/dspm.tar.gz')
+    .useGzip()
     .dependsOn('installDist');
 };

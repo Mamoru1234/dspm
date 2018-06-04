@@ -2,7 +2,6 @@
 
 TARGET_PATH=$(realpath $1)
 
-npm run build
 ./scripts/pre_deploy.sh
 
 rm -rfv "$TARGET_PATH/.dspm"

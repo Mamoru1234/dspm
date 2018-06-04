@@ -1,7 +1,7 @@
 import Promise from 'bluebird';
 import fs from 'fs';
 import tar, {PackOptions} from 'tar-fs';
-import {log} from 'util';
+import {createGzip} from 'zlib';
 import {Project} from '../Project';
 import {Task} from '../Task';
 
@@ -25,6 +25,13 @@ export class ArchiveTask extends Task {
 
   private _targetPath: string = '';
 
+  private _transformFactory: (stream: any) => any;
+
+  constructor(name: string, project: Project) {
+    super(name, project);
+    this._transformFactory = (stream) => stream;
+  }
+
   public from(sourceFolder: string, options?: PackOptions): this {
     this._packItems.push({
       options,
@@ -38,36 +45,41 @@ export class ArchiveTask extends Task {
     return this;
   }
 
+  public useGzip(): this {
+    this._transformFactory = (stream) => {
+      const zip = createGzip();
+      zip.pipe(stream);
+      return zip;
+    };
+    return this;
+  }
+
   public exec(): Promise<any> {
     if (!this._targetPath) {
       throw new Error(`You should specify correct target path`);
     }
-    log(`Packaging: ${JSON.stringify(this._packItems)}`);
-    const targetStream = fs.createWriteStream(this._targetPath);
+    const targetStream = this._transformFactory(fs.createWriteStream(this._targetPath));
     return new Promise<any>((res, rej) => {
-      setImmediate(() => {
-        const packItem = this._packItems.shift();
-        if (!packItem) {
-          rej('No pack item specified');
-          return;
-        }
-        const opts = Object.assign({}, packItem.options, {
-          finalize: !this._packItems.length,
-          finish: (newPack: any) => {
-            setImmediate(() => {
-              this._pullPackQueue(newPack);
-            });
-          },
-        });
-        log(`Initial opts: ${JSON.stringify(opts, null, 2)}`);
-        tar.pack(packItem.sourceFolder, opts).pipe(targetStream);
-      });
-      targetStream.on('error', (err) => {
+      targetStream.on('error', (err: any) => {
         rej(err);
       });
       targetStream.on('finish', () => {
         res();
       });
+      const packItem = this._packItems.shift();
+      if (!packItem) {
+        rej('No pack item specified');
+        return;
+      }
+      const opts = Object.assign({}, packItem.options, {
+        finalize: !this._packItems.length,
+        finish: (newPack: any) => {
+          setImmediate(() => {
+            this._pullPackQueue(newPack);
+          });
+        },
+      });
+      tar.pack(packItem.sourceFolder, opts).pipe(targetStream);
     });
   }
 

@@ -22,18 +22,15 @@ export function applyJSProjectPlugin(project: Project) {
   const packageJson = require(join(project.getProjectPath(), 'package.json'));
   const dependencies = merge({}, packageJson.dependencies, packageJson.devDependencies);
 
-  CleanTask.create(project, 'cleanModules', (task) => task
-    .clean('node_modules'),
-  );
+  CleanTask.create(project, 'cleanModules')
+    .clean('node_modules');
 
-  InstallTask.create(project, 'install', (task) => task
+  InstallTask.create(project, 'install')
     .dependencies(dependencies)
-    .dependsOn('cleanModules'),
-  );
+    .dependsOn('cleanModules');
 
   forEach(packageJson.scripts, (command: string, scriptName: string) => {
-    NpmScriptTask.create(project, scriptName, (task) => task
-      .command(command),
-    );
+    NpmScriptTask.create(project, scriptName)
+      .command(command);
   });
 }

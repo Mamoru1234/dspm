@@ -19,21 +19,9 @@ export class InstallTask extends Task {
   public static create(
     project: Project,
     name: string,
-    configurator: (task: InstallTask) => void,
   ): InstallTask {
     const task = new InstallTask(name, project);
-    configurator(task);
     project.setTask(name, task);
-    return task;
-  }
-
-  public static refine(
-    project: Project,
-    name: string,
-    configurator: (task: InstallTask) => void,
-  ): InstallTask {
-    const task = project.getTask(name) as InstallTask;
-    configurator(task);
     return task;
   }
 
@@ -131,6 +119,11 @@ export class InstallTask extends Task {
         return Promise.resolve(null);
       }
       const resolver = resolvers.getItem(child.resolvedBy);
+      if (!resolver) {
+        // tslint:disable-next-line
+        console.log(child);
+        throw new Error('WTF!');
+      }
       return binProvider.extractNode(targetPath, child, resolver)
         .then((folderName: string) => {
           log(`Exctracted into ${folderName}`);

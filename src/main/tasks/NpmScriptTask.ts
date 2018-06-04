@@ -8,10 +8,8 @@ export class NpmScriptTask extends CmdTask {
   public static create(
     project: Project,
     name: string,
-    configurator: (task: NpmScriptTask) => void,
   ): NpmScriptTask {
     const task = new NpmScriptTask(name, project);
-    configurator(task);
     project.setTask(name, task);
     return task;
   }
