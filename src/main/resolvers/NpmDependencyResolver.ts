@@ -1,7 +1,7 @@
 import Promise from 'bluebird';
+import { ensureDirSync } from 'fs-extra';
 import gunzip from 'gunzip-maybe';
 import { has } from 'lodash';
-import { sync as mkDirSync } from 'mkdirp';
 import { join } from 'path';
 import { get as originalGet } from 'request';
 import { get } from 'request-promise';
@@ -46,7 +46,7 @@ export class NpmDependencyResolver implements DependencyResolver {
     private repositoryURL: string = 'https://registry.npmjs.org') {
     if (_cacheFolder !== 'null') {
       const _dirPath = join(_cacheFolder, repositoryURL.replace(/\//g, '%2f'));
-      mkDirSync(_dirPath);
+      ensureDirSync(_dirPath);
       this._modulesCache = new FSContentCache(_dirPath);
     }
   }

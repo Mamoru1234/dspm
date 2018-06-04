@@ -11,6 +11,4 @@ node build/dist/bin/dspm.js distArchive --cache.path=null
 #envsubst < scripts/dspm > build/dspm
 #unset DSPM_VERSION
 
-cp scripts/dspm build/dspm
-
 chmod +x ../dspm

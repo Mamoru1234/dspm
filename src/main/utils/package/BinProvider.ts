@@ -1,7 +1,6 @@
 import Promise from 'bluebird';
-import {chmodSync, constants, symlink} from 'fs';
+import {chmodSync, constants, ensureDirSync, symlink} from 'fs-extra';
 import {get, noop, once} from 'lodash';
-import mkdirp from 'mkdirp';
 import {join} from 'path';
 import {log} from 'util';
 import {DependencyResolver} from '../../resolvers/DependencyResolver';
@@ -22,7 +21,7 @@ export class BinProvider {
 
   constructor(private _binPath: string) {
     this._createBinFolder = once(() => {
-      mkdirp.sync(_binPath);
+      ensureDirSync(_binPath);
     });
   }
 
@@ -90,7 +89,7 @@ export class BinProvider {
   private _createBinLink(binKey: string, linkPath: string) {
     log(`Linking: [${binKey}]: ${linkPath}`);
     const targetLink = join(this._binPath, binKey);
-    return symLinkAsync(linkPath, targetLink)
+    return symLinkAsync(linkPath, targetLink, undefined)
       .then(() => {
         // tslint:disable-next-line
         chmodSync(linkPath, constants.S_IXUSR | constants.S_IRUSR);
