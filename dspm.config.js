@@ -1,4 +1,5 @@
 const { join } = require('path');
+const { ArchiveTask } = require('./build/dist/main/tasks/ArchiveTask');
 const { InstallTask } = require('./build/dist/main/tasks/InstallTask');
 const { CleanTask } = require('./build/dist/main/tasks/CleanTask');
 const { applyJSProjectPlugin } = require('./build/dist/main/plugins/JSProjectPlugin');
@@ -20,4 +21,10 @@ module.exports = (project) => {
     .dependencies(require('./package').dependencies)
     .targetPath('./build/dist'),
   );
+
+  ArchiveTask.create(project, 'distArchive')
+    .from('./build/dist')
+    .from('.', { entries: ['package.json'] })
+    .into('build/dspm.tar')
+    .dependsOn('installDist');
 };

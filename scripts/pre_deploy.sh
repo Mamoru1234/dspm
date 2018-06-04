@@ -8,7 +8,7 @@ fi
 
 echo "Packaging deploy"
 
-node build/dist/bin/dspm.js installDist --cache.path=null
+node build/dist/bin/dspm.js distArchive --cache.path=null
 
 cd build/dist
 
