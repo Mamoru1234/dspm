@@ -154,7 +154,6 @@ export class NpmDependencyResolver implements DependencyResolver {
     log(`Get Metadata: ${packageName}[${packageDescription}]`);
     return this.__getPackageData(packageName).then((res: any) => {
       const response = JSON.parse(res);
-      // TODO handle latest version
       const { versions } = response;
       const satisfiedVersion = has(response['dist-tags'], packageDescription)
         ? response['dist-tags'][packageDescription]
