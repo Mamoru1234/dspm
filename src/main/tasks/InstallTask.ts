@@ -1,6 +1,6 @@
 import Promise from 'bluebird';
 import {map} from 'lodash';
-import {join, resolve} from 'path';
+import {join} from 'path';
 import rimraf from 'rimraf';
 import {log} from 'util';
 
@@ -49,7 +49,7 @@ export class InstallTask extends Task {
   }
 
   public targetPath(path: string) {
-    this._targetPath = resolve(path);
+    this._targetPath = join(this.project.getProjectPath(), path);
     return this;
   }
 

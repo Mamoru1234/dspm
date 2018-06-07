@@ -1,5 +1,6 @@
 import Promise from 'bluebird';
 import {copy} from 'fs-extra';
+import {join} from 'path';
 import {Project} from '../Project';
 import {Task} from '../Task';
 
@@ -16,12 +17,12 @@ export class CopyTask extends Task {
   private _targetPath: string = '';
 
   public from(source: string): this {
-    this._fromPath = source;
+    this._fromPath = join(this.project.getProjectPath(), source);
     return this;
   }
 
   public into(targetPath: string): this {
-    this._targetPath = targetPath;
+    this._targetPath = join(this.project.getProjectPath(), targetPath);
     return this;
   }
 

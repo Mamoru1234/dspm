@@ -1,5 +1,6 @@
 import Promise from 'bluebird';
 import fs from 'fs';
+import {join} from 'path';
 import tar, {PackOptions} from 'tar-fs';
 import {createGzip} from 'zlib';
 import {Project} from '../Project';
@@ -35,13 +36,13 @@ export class ArchiveTask extends Task {
   public from(sourceFolder: string, options?: PackOptions): this {
     this._packItems.push({
       options,
-      sourceFolder,
+      sourceFolder: join(this.project.getProjectPath(), sourceFolder),
     });
     return this;
   }
 
   public into(targetPath: string): this {
-    this._targetPath = targetPath;
+    this._targetPath = join(this.project.getProjectPath(), targetPath);
     return this;
   }
 
