@@ -1,6 +1,7 @@
 import Promise from 'bluebird';
 import {map} from 'lodash';
 import {join, resolve} from 'path';
+import rimraf from 'rimraf';
 import {log} from 'util';
 
 import {LockProvider} from '../caches/LockProvider';
@@ -13,6 +14,8 @@ import {DepTreeNode} from '../utils/DepTreeNode';
 import {BinProvider} from '../utils/package/BinProvider';
 import {PackageDescription} from '../utils/package/PackageDescription';
 import {convertDependenciesMap} from '../utils/package/PackageJsonParse';
+
+const rimrafAsync = Promise.promisify(rimraf);
 
 export class InstallTask extends Task {
 
@@ -69,10 +72,11 @@ export class InstallTask extends Task {
     const lockProvider = lockProviders.getItem(this._lockProviderName);
 
     const rootPromise: Promise<DepTreeNode> = this._getDepTree(lockProvider);
+    const targetPath = join(this._targetPath, this._modulePrefix);
 
     return rootPromise
+      .tap(() => rimrafAsync(targetPath))
       .then((root: DepTreeNode) => {
-        const targetPath = join(this._targetPath, this._modulePrefix);
         const binProvider = new BinProvider(join(targetPath, '.bin'));
         return this.__exctractDepNode(targetPath, root, binProvider, resolvers);
       });
