@@ -1,30 +1,28 @@
 #!/usr/bin/env node
-import { Provider } from 'nconf';
-import path from 'path';
-import {log} from 'util';
-import {
-  Project,
-} from '../main/Project';
+import {resolve} from 'path';
+import {error} from 'util';
 
-const provider = new Provider();
+import { ProjectCreator } from '../main/ProjectCreator';
 
-provider
-  .env()
-  .argv();
+try {
+  const project = ProjectCreator.createProject(resolve('.'));
+  const taskName = process.argv[2];
 
-const projectPath = path.resolve('.');
-const project = new Project(provider, projectPath);
+  const task = project.getTask(taskName);
 
-const configuration = require(path.resolve('./dspm.config.js'));
-
-configuration(project);
-
-const taskName = process.argv[2];
-
-const task = project.getTask(taskName);
-
-if (task) {
-  task.run();
-} else {
-  log(`Task ${taskName} not found in project`);
+  if (task) {
+    task.run()
+      .catch((e: any) => {
+        error('Error during task execution');
+        error(e);
+        process.exit(-1);
+      });
+  } else {
+    error(`Task ${taskName} not found in project`);
+    process.exit(-1);
+  }
+} catch (e) {
+  error('Error during project evaluation');
+  error(e);
+  process.exit(-1);
 }

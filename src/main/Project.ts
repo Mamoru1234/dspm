@@ -7,10 +7,22 @@ import {Task} from './Task';
 export class Project {
   private _tasks: {[key: string]: any} = {};
   private _namespaces: {[key: string]: Namespace<any>} = {};
+  private _subProjects: {[key: string]: Project} = {};
 
   constructor(
     private _provider: Provider,
     private _projectPath: string) {}
+
+  public setSubProjects(subProjects: {[key: string]: Project}) {
+    this._subProjects = subProjects;
+  }
+
+  public getSubProject(projectName: string): Project {
+    if (!has(this._subProjects, projectName)) {
+      throw new Error(`Unknown sub-project ${projectName}`);
+    }
+    return this._subProjects[projectName];
+  }
 
   public getProjectPath() {
     return this._projectPath;
@@ -46,6 +58,9 @@ export class Project {
   }
 
   public getTask<T = Task>(name: string) {
+    if (!has(this._tasks, name)) {
+      throw new Error(`Unknown task ${name}`);
+    }
     return this._tasks[name] as T;
   }
 }

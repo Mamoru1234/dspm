@@ -4,8 +4,8 @@ TARGET_PATH=$(realpath $1)
 
 ./scripts/pre_deploy.sh
 
-rm -rfv "$TARGET_PATH/.dspm"
-rm -rfv "$TARGET_PATH/dspm"
+rm -rf "$TARGET_PATH/.dspm"
+rm -rf "$TARGET_PATH/dspm"
 
 echo "installing dspm..."
 

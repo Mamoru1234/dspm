@@ -13,11 +13,10 @@ export class Task {
   }
 
   public dependsOn(task: Task | string): Task {
-    if (task instanceof Task) {
-      this._dependencies.push(task);
-    }
     if (typeof task === 'string') {
       this._dependencies.push(this.project.getTask(task));
+    } else {
+      this._dependencies.push(task);
     }
     return this;
   }
