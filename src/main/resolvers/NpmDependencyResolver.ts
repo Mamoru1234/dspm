@@ -34,18 +34,41 @@ const mapNpmTarHeader = (header: Headers) => {
   return header;
 };
 
+export interface NpmResolverOptions {
+  resolverName: string;
+  // token returned by https://github.com/npm/registry/blob/master/docs/user/authentication.md#login
+  token?: string;
+  cacheFolder?: string;
+  repositoryUrl?: string;
+}
+
 export class NpmDependencyResolver implements DependencyResolver {
   private _networkLock: AutoReleaseSemaphore = new AutoReleaseSemaphore(32);
   private _fileLock: AutoReleaseSemaphore = new AutoReleaseSemaphore(16);
   private readonly _modulesCache?: ContentCache;
   private _packageRequests: any = {};
 
-  constructor(
-    private _resolverName: string,
-    _cacheFolder: string,
-    private repositoryURL: string = 'https://registry.npmjs.org') {
-    if (_cacheFolder !== 'null') {
-      const _dirPath = join(_cacheFolder, repositoryURL.replace(/\//g, '%2f'));
+  private readonly _resolverName: string;
+  private readonly _repositoryURL: string;
+  private readonly _requestOptions: any = undefined;
+
+  constructor({
+    cacheFolder = 'null',
+    resolverName,
+    token,
+    repositoryUrl = 'https://registry.npmjs.org',
+  }: NpmResolverOptions) {
+    this._resolverName = resolverName;
+    this._repositoryURL = repositoryUrl;
+    if (token) {
+      this._requestOptions = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+    }
+    if (cacheFolder !== 'null') {
+      const _dirPath = join(cacheFolder, repositoryUrl.replace(/\//g, '%2f'));
       ensureDirSync(_dirPath);
       this._modulesCache = new FSContentCache(_dirPath);
     }
@@ -95,7 +118,7 @@ export class NpmDependencyResolver implements DependencyResolver {
   private __extractFromRegistry(distFolder: string, node: DepTreeNode): Promise<string> {
 
     const itemKey = `${node.packageName}#${node.packageVersion}`;
-    let moduleStream: any = originalGet(node.options.dist.tarball);
+    let moduleStream: any = originalGet(node.options.dist.tarball, this._requestOptions);
 
     if (!this._modulesCache) {
       return this.__extract(distFolder, moduleStream);
@@ -155,7 +178,7 @@ export class NpmDependencyResolver implements DependencyResolver {
       return this._packageRequests[packageName];
     }
     const _packageName = packageName.replace('/', '%2F');
-    const request = get(`${this.repositoryURL}/${_packageName}`);
+    const request = get(`${this._repositoryURL}/${_packageName}`, this._requestOptions);
     this._packageRequests[packageName] = request;
     return request;
   }

@@ -11,7 +11,11 @@ import {NpmScriptTask} from '../tasks/NpmScriptTask';
 
 export function applyJSProjectPlugin(project: Project) {
   const cachePath = project.getProperty('cache:path', join(homedir(), '.cache', 'dspm'));
-  const resolver = new NpmDependencyResolver('npm', cachePath);
+  const resolver = new NpmDependencyResolver({
+    cacheFolder: cachePath,
+    resolverName: 'npm',
+    token: project.getProperty('npm:token'),
+  });
   const resolvers = project.ensureNameSpace('resolvers');
   resolvers.setItem('npm', resolver);
 
