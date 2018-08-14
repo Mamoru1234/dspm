@@ -1,17 +1,14 @@
 import Promise from 'bluebird';
-import {map} from 'lodash';
 import {join} from 'path';
 import rimraf from 'rimraf';
-import {log} from 'util';
 
 import {LockProvider} from '../caches/LockProvider';
-import {Namespace} from '../Namespace';
 import {Project} from '../Project';
 import {DependencyResolver} from '../resolvers/DependencyResolver';
 import {Task} from '../Task';
 import {DepTreeBuilder} from '../utils/DepTreeBuilder';
 import {DepTreeNode} from '../utils/DepTreeNode';
-import {BinProvider} from '../utils/package/BinProvider';
+import {ExtractTreeProvider} from '../utils/ExtractTreeProvider';
 import {PackageDescription} from '../utils/package/PackageDescription';
 import {convertDependenciesMap} from '../utils/package/PackageJsonParse';
 
@@ -77,8 +74,7 @@ export class InstallTask extends Task {
     return rootPromise
       .tap(() => rimrafAsync(targetPath))
       .then((root: DepTreeNode) => {
-        const binProvider = new BinProvider(join(targetPath, '.bin'));
-        return this.__exctractDepNode(targetPath, root, binProvider, resolvers);
+        return new ExtractTreeProvider(this._targetPath, this._modulePrefix, resolvers).extractTree(root);
       });
   }
 
@@ -111,28 +107,5 @@ export class InstallTask extends Task {
         return lockProvider.saveDepTree(root)
           .then(() => root);
       });
-  }
-
-  private __exctractDepNode(
-    targetPath: string,
-    node: DepTreeNode,
-    binProvider: BinProvider,
-    resolvers: Namespace<DependencyResolver>): Promise<any> {
-    return Promise.all(map(node.children, (child: DepTreeNode) => {
-      if (!child.packageName || !child.packageVersion || !child.resolvedBy) {
-        return Promise.resolve(null);
-      }
-      const resolver = resolvers.getItem(child.resolvedBy);
-      if (!resolver) {
-        // tslint:disable-next-line
-        console.log(child);
-        throw new Error('WTF!');
-      }
-      return binProvider.extractNode(targetPath, child, resolver)
-        .then((folderName: string) => {
-          log(`Exctracted into ${folderName}`);
-          return this.__exctractDepNode(join(folderName, this._modulePrefix), child, binProvider, resolvers);
-        });
-    }));
   }
 }
