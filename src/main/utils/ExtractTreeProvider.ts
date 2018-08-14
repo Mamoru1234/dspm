@@ -113,7 +113,7 @@ export class ExtractTreeProvider {
   private _createBinLink(binKey: string, linkPath: string) {
     log(`Linking: [${binKey}]: ${linkPath}`);
     const targetLink = join(this._binPath, binKey);
-    return symLinkAsync(linkPath, targetLink, undefined)
+    return symLinkAsync(linkPath, targetLink)
       .then(() => {
         // tslint:disable-next-line
         chmodSync(linkPath, constants.S_IXUSR | constants.S_IRUSR);
