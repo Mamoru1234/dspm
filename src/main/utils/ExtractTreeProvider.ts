@@ -58,10 +58,12 @@ export class ExtractTreeProvider {
     const packageName = node.packageName;
     const scripts = get(node, 'options.scripts');
     // TODO mkdirp here, refactor extract
-    return this._executeScript(parentPath, scripts, 'preinstall')
-      .then(() => resolver.extract(join(parentPath, this._modulePrefix), node))
+    const modulePath = join(parentPath, this._modulePrefix, packageName);
+    return ensureDirAsync(modulePath)
+      .then(() => this._executeScript(parentPath, scripts, 'preinstall'))
+      .then(() => resolver.extract(modulePath, node))
       .then(() => ({
-        parentPath: join(parentPath, this._modulePrefix, packageName),
+        parentPath: modulePath,
       }));
   }
 

@@ -14,6 +14,7 @@ import {FSContentCache} from '../caches/FSContentCache';
 import {ChainedWriteStream} from '../streams/ChainedWriteStream';
 import {DepTreeNode} from '../utils/DepTreeNode';
 import {PackageDescription} from '../utils/package/PackageDescription';
+import {skipResult} from '../utils/PromiseUtils';
 import {AutoReleaseSemaphore} from '../utils/Semaphore';
 import {DependencyResolver, PackageMetaData} from './DependencyResolver';
 import ReadableStream = NodeJS.ReadableStream;
@@ -85,24 +86,23 @@ export class NpmDependencyResolver implements DependencyResolver {
     };
   }
 
-  public extract(targetFolder: string, node: DepTreeNode): Promise<string> {
+  public extract(targetFolder: string, node: DepTreeNode): Promise<void> {
     return this._fileLock.acquire(() => {
       const itemKey = `${node.packageName}#${node.packageVersion}`;
-      const distFolder = join(targetFolder, node.packageName!!);
       if (!this._modulesCache) {
-        return this.__extractFromRegistry(distFolder, node);
+        return this.__extractFromRegistry(targetFolder, node);
       }
       return this._modulesCache.hasItem(itemKey)
         .then((isInCache) => {
           log(`${node.packageName} [${node.packageVersion}] in cache: ${isInCache}`);
           if (!isInCache) {
-            return this.__extractFromRegistry(distFolder, node);
+            return this.__extractFromRegistry(targetFolder, node);
           }
           return this._modulesCache!!.getItem(itemKey).then((stream) => {
-            return this.__extract(distFolder, stream);
+            return this.__extract(targetFolder, stream);
           });
         });
-    });
+    }).then(skipResult);
   }
 
   public getMetaData(packageDescription: PackageDescription): Promise<PackageMetaData> {

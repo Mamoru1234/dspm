@@ -11,6 +11,6 @@ export interface PackageMetaData {
 
 export interface DependencyResolver {
   parseDependencyItem(dependencyKey: string, dependencyDescription: string): PackageDescription;
-  extract(targetFolder: string, node: DepTreeNode): Promise<string>;
+  extract(targetFolder: string, node: DepTreeNode): Promise<void>;
   getMetaData(packageDescription: PackageDescription): Promise<PackageMetaData>;
 }

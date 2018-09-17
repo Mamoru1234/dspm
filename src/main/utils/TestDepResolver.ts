@@ -19,7 +19,7 @@ export interface ResolutionParam {
 export class TestDepResolver implements DependencyResolver{
   public getMetadataStub: sinon.SinonStub;
 
-  extract(targetFolder: string, node: DepTreeNode): Promise<string> {
+  extract(targetFolder: string, node: DepTreeNode): Promise<void> {
     log(targetFolder);
     log(node.packageName!!);
     throw new Error('this kind of resolver not designed for extract');
