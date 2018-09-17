@@ -16,14 +16,7 @@ export function parseDependencyItem(
   }
   const semiIndex = dependencyDescription.indexOf(':');
   if (semiIndex === -1) {
-    return {
-      resolverArgs: {
-        packageName: dependencyKey,
-        packageVersion: dependencyDescription,
-      },
-      resolverName: 'npm',
-      semVersion: dependencyDescription,
-    };
+    return resolvers.getItem('npm').parseDependencyItem(dependencyKey, dependencyDescription);
   }
   const resolver = resolvers
     .getItem(dependencyDescription.substring(0, semiIndex));
