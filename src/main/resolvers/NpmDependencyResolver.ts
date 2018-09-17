@@ -1,7 +1,7 @@
 import Promise from 'bluebird';
 import { ensureDirSync } from 'fs-extra';
 import gunzip from 'gunzip-maybe';
-import { has } from 'lodash';
+import { has, noop } from 'lodash';
 import { join } from 'path';
 import { get as originalGet } from 'request';
 import { get } from 'request-promise';
@@ -14,7 +14,6 @@ import {FSContentCache} from '../caches/FSContentCache';
 import {ChainedWriteStream} from '../streams/ChainedWriteStream';
 import {DepTreeNode} from '../utils/DepTreeNode';
 import {PackageDescription} from '../utils/package/PackageDescription';
-import {skipResult} from '../utils/PromiseUtils';
 import {AutoReleaseSemaphore} from '../utils/Semaphore';
 import {DependencyResolver, PackageMetaData} from './DependencyResolver';
 import ReadableStream = NodeJS.ReadableStream;
@@ -102,7 +101,7 @@ export class NpmDependencyResolver implements DependencyResolver {
             return this.__extract(targetFolder, stream);
           });
         });
-    }).then(skipResult);
+    }).then(noop);
   }
 
   public getMetaData(packageDescription: PackageDescription): Promise<PackageMetaData> {

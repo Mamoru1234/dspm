@@ -98,14 +98,16 @@ export class ExtractTreeProvider {
 
     if (typeof bin === 'string') {
       const linkPath = join(modulePath, bin);
-      return this._createBinLink(node.packageName!!, linkPath);
+      return this._createBinFolder()
+        .then(() => this._createBinLink(node.packageName!!, linkPath));
     }
     if (typeof bin === 'object') {
-      return Promise
-        .map(Object.keys(bin), (binKey: string) => {
-          const linkPath = join(modulePath, bin[binKey]);
-          return this._createBinLink(binKey, linkPath);
-        })
+      return this._createBinFolder()
+        .then(() => Promise
+          .map(Object.keys(bin), (binKey: string) => {
+            const linkPath = join(modulePath, bin[binKey]);
+            return this._createBinLink(binKey, linkPath);
+          }))
         .then(noop);
     }
 
