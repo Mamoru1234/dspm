@@ -44,7 +44,10 @@ export class CmdTask extends Task {
       // execute with custom env
       const env = merge({}, process.env, this._userEnv);
       env.PATH = `${this._pathItems.join(':')}:${env.PATH}`;
-      return executeCommand(this._command, { env });
+      return executeCommand(this._command, {
+        cwd: this.project.getProjectPath(),
+        env,
+      });
     }
 
     return executeCommand(this._command);

@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+CWD=$(pwd)
+DSPM_VERSION=0.1.6
+
+ensureArtifact () {
+    if [ ! -d "$CWD/.dspm" ]; then
+        echo "Installing dspm version $DSPM_VERSION"
+
+        wget -q "https://github.com/Mamoru1234/dspm/releases/download/$DSPM_VERSION/dspm.tar.gz"
+
+        mkdir -p .dspm/dist
+        tar -xzf dspm.tar.gz -C .dspm/dist
+
+        rm -f dspm.tar.gz
+    fi
+}
+
+ensureConfig () {
+    if [ ! -f "$CWD/dspm.config.js" ]; then
+        read -p "Do you want to generate default config? [y/n] " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo """const { applyJSProjectPlugin } = require('./.dspm/dist/main/plugins/JSProjectPlugin');
+
+module.exports = (project) => {
+	  applyJSProjectPlugin(project);
+};
+
+            """ >> "$CWD/dspm.config.js"
+        fi
+    fi
+}
+
+ensureArtifact
+ensureConfig
+
+node ./.dspm/dist/bin/dspm.js $@

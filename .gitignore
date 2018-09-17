@@ -3,4 +3,6 @@
 build/
 package-lock.json
 
+.dspm/
+
 node_modules/

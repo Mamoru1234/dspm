@@ -1,0 +1,16 @@
+{
+  "name": "file-sample",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dspm.config.js",
+  "scripts": {
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+  },
+  "dependencies": {
+    "ts-project": "file:build/libs/ts-project.tgz"
+  }
+}

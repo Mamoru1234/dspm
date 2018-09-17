@@ -1,5 +1,5 @@
 import Promise from 'bluebird';
-import fs from 'fs';
+import fs from 'fs-extra';
 import {join} from 'path';
 import tar, {PackOptions} from 'tar-fs';
 import {createGzip} from 'zlib';
@@ -10,6 +10,8 @@ interface PackItem {
   sourceFolder: string;
   options?: PackOptions;
 }
+
+const ensureDirAsync = Promise.promisify(fs.ensureDir);
 
 export class ArchiveTask extends Task {
 
@@ -59,8 +61,13 @@ export class ArchiveTask extends Task {
     if (!this._targetPath) {
       throw new Error(`You should specify correct target path`);
     }
-    const targetStream = this._transformFactory(fs.createWriteStream(this._targetPath));
+    return ensureDirAsync(join(this._targetPath, '..'))
+      .then(() => this.makeArchive());
+  }
+
+  private makeArchive() {
     return new Promise<any>((res, rej) => {
+      const targetStream = this._transformFactory(fs.createWriteStream(this._targetPath));
       targetStream.on('error', (err: any) => {
         rej(err);
       });
