@@ -34,7 +34,6 @@ export class ExtractTreeProvider {
     });
     this._executionPath = `${this._binPath}:${process.env.PATH}`;
   }
-
   public extractTree(root: DepTreeNode): Promise<any> {
     return deepTraversal(root, this._installNode.bind(this), { parentPath: this._targetPath})
       .tap(() => {
@@ -43,7 +42,6 @@ export class ExtractTreeProvider {
       .then(() => breadTraversal(root, this._modulePrefix, this._targetPath, this._provideBinLinks.bind(this)))
       .then(() => breadTraversal(root, this._modulePrefix, this._targetPath, this._postInstallNode.bind(this)));
   }
-
   private _installNode(node: DepTreeNode, { parentPath }: NodeContext): Promise<any> {
     if (!node.packageName || !node.packageVersion || !node.resolvedBy) {
       return Promise.resolve(null);
@@ -66,12 +64,10 @@ export class ExtractTreeProvider {
         parentPath: modulePath,
       }));
   }
-
   private _postInstallNode(node: DepTreeNode, modulePath: string): Promise<any> {
     const scripts = get(node, 'options.scripts');
     return this._executeScript(modulePath, scripts, 'install');
   }
-
   private _executeScript(targetPath: string, scripts: any, scriptName: string): Promise<any> {
     if (scripts === undefined) {
       return Promise.resolve();
@@ -94,33 +90,35 @@ export class ExtractTreeProvider {
       return Promise.resolve();
     }
 
-    this._createBinFolder();
+    const binPath = join(modulePath, '../.bin');
 
     if (typeof bin === 'string') {
       const linkPath = join(modulePath, bin);
       return this._createBinFolder()
-        .then(() => this._createBinLink(node.packageName!!, linkPath));
+        .then(() => this._createBinLink(binPath, node.packageName!!, linkPath))
+        .then(noop);
     }
+
     if (typeof bin === 'object') {
       return this._createBinFolder()
         .then(() => Promise
           .map(Object.keys(bin), (binKey: string) => {
             const linkPath = join(modulePath, bin[binKey]);
-            return this._createBinLink(binKey, linkPath);
+            return this._createBinLink(binPath, binKey, linkPath);
           }))
         .then(noop);
     }
 
     return Promise.reject('Unknown bin links creation error');
   }
-  // FIXME find better way to handle duplicated links error then ignoring promise error
-  private _createBinLink(binKey: string, linkPath: string) {
-    log(`Linking: [${binKey}]: ${linkPath}`);
+  private _createBinLink(binPath: string, binKey: string, linkPath: string) {
+    log(`Linking: [${binKey}]: ${linkPath} into ${binPath}`);
     const targetLink = join(this._binPath, binKey);
-    return symLinkAsync(linkPath, targetLink)
+    return ensureDirAsync(binPath)
+      .then(() => symLinkAsync(linkPath, targetLink))
       .then(() => {
         // tslint:disable-next-line
         chmodSync(linkPath, constants.S_IXUSR | constants.S_IRUSR);
-      }, noop);
+      });
   }
 }
