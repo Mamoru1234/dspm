@@ -24,10 +24,10 @@ ensureConfig () {
             echo """const { applyJSProjectPlugin } = require('./.dspm/dist/main/plugins/JSProjectPlugin');
 
 module.exports = (project) => {
-	  applyJSProjectPlugin(project);
+  applyJSProjectPlugin(project);
 };
 
-            """ >> "$CWD/dspm.config.js"
+""" >> "$CWD/dspm.config.js"
         fi
     fi
 }
