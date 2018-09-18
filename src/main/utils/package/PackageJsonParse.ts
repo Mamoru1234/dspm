@@ -20,7 +20,7 @@ export function parseDependencyItem(
   }
   const resolver = resolvers
     .getItem(dependencyDescription.substring(0, semiIndex));
-  return resolver.parseDependencyItem(dependencyKey, dependencyDescription.substring(semiIndex));
+  return resolver.parseDependencyItem(dependencyKey, dependencyDescription.substring(semiIndex + 1));
 }
 
 export function convertDependenciesMap(

@@ -5,19 +5,26 @@ import {join} from 'path';
 
 import {FSLockProvider} from '../caches/FSLockProvider';
 import {Project} from '../Project';
+import {FileDependencyResolver} from '../resolvers/FileDependencyResolver';
 import {NpmDependencyResolver} from '../resolvers/NpmDependencyResolver';
 import {InstallTask} from '../tasks/InstallTask';
 import {NpmScriptTask} from '../tasks/NpmScriptTask';
 
 export function applyJSProjectPlugin(project: Project) {
   const cachePath = project.getProperty('cache:path', join(homedir(), '.cache', 'dspm'));
-  const resolver = new NpmDependencyResolver({
+  const npmDependencyResolver = new NpmDependencyResolver({
     cacheFolder: cachePath,
     resolverName: 'npm',
     token: project.getProperty('npm:token'),
   });
+  const fileResolver = new FileDependencyResolver({
+    basePath: project.getProjectPath(),
+    depProperties: FileDependencyResolver.DEV_DEP_PROPERTIES,
+    name: 'file',
+  });
   const resolvers = project.ensureNameSpace('resolvers');
-  resolvers.setItem('npm', resolver);
+  resolvers.setItem('npm', npmDependencyResolver);
+  resolvers.setItem('file', fileResolver);
 
   const lockProviders = project.ensureNameSpace('lock_providers');
   lockProviders.setItem('default', new FSLockProvider(join(project.getProjectPath(), 'dspm.lock.json')));

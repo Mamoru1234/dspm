@@ -1,5 +1,5 @@
-export interface PackageDescription {
+export interface PackageDescription<T = any> {
   resolverName: string;
-  resolverArgs: {[key: string]: any};
+  resolverArgs: T;
   semVersion?: string;
 }
