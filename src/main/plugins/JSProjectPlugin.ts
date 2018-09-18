@@ -2,6 +2,7 @@ import forEach from 'lodash/forEach';
 import merge from 'lodash/merge';
 import {homedir} from 'os';
 import {join} from 'path';
+import {log} from 'util';
 
 import {FSLockProvider} from '../caches/FSLockProvider';
 import {Project} from '../Project';
@@ -11,6 +12,7 @@ import {InstallTask} from '../tasks/InstallTask';
 import {NpmScriptTask} from '../tasks/NpmScriptTask';
 
 export function applyJSProjectPlugin(project: Project) {
+  log(project.getProperty('cache:path'));
   const cachePath = project.getProperty('cache:path', join(homedir(), '.cache', 'dspm'));
   const npmDependencyResolver = new NpmDependencyResolver({
     cacheFolder: cachePath,

@@ -23,13 +23,26 @@ interface ProjectConfig {
 function isComplexConfiguration(configuration: any): configuration is ProjectConfig {
   return typeof configuration.configurator === 'function' && isPlainObject(configuration.subProjects);
 }
+const ENV_PREFIX = 'DSPM_';
+
+const envTransform = ({ key, value }: {key: string, value: string}) => {
+  if (key.startsWith(ENV_PREFIX)) {
+    return {
+      key: key.substring(ENV_PREFIX.length),
+      value,
+    };
+  }
+  return false;
+};
 
 function createProject(projectPath: string, evaluatedPaths: string[]): Project {
   protectCicles(projectPath, evaluatedPaths);
   const provider = new Provider();
-
   provider
-    .env()
+    .env({
+      separator: '_',
+      transform: envTransform,
+    })
     .argv();
 
   const project = new Project(provider, projectPath);
