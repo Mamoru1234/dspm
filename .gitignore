@@ -4,5 +4,6 @@ build/
 package-lock.json
 
 .dspm/
+dspm
 
 node_modules/

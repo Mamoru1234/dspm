@@ -6,9 +6,11 @@
 Inspired by [Gradle](https://gradle.org/)
 
 ### Instalation
+* move to your project directory.
 * Ubuntu:
 ```bash
-wget -O - https://github.com/Mamoru1234/dspm/releases/download/0.0.7/install.sh | sh
+wget https://github.com/Mamoru1234/dspm/releases/download/0.2.1/dspm
+chmod +x ./dspm
 ```
 
 Road Map:
