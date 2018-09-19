@@ -13,6 +13,8 @@ wget https://github.com/Mamoru1234/dspm/releases/download/0.2.1/dspm
 chmod +x ./dspm
 ```
 
+For more information please visit wiki.
+
 Road Map:
 
 - [ ] DSL for configuration and ability to add more tasks
