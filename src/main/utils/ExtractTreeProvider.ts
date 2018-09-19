@@ -119,6 +119,7 @@ export class ExtractTreeProvider {
       .then(() => {
         // tslint:disable-next-line
         chmodSync(linkPath, constants.S_IXUSR | constants.S_IRUSR);
-      });
+      })
+      .catch(noop); // TODO: test that it's good idea to ignore error here
   }
 }
