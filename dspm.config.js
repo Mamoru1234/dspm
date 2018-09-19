@@ -1,7 +1,7 @@
 const { join } = require('path');
 const { ArchiveTask } = require('./build/dist/main/tasks/ArchiveTask');
 const { InstallTask } = require('./build/dist/main/tasks/InstallTask');
-const { CopyTask } = require('./build/dist/main/tasks/CopyTask');
+const { NpmScriptTask } = require('./build/dist/main/tasks/NpmScriptTask');
 const { applyJSProjectPlugin } = require('./build/dist/main/plugins/JSProjectPlugin');
 const { FSLockProvider } = require('./build/dist/main/caches/FSLockProvider');
 
@@ -16,9 +16,9 @@ module.exports = (project) => {
     .dependencies(require('./package').dependencies)
     .targetPath('./build/dist');
 
-  CopyTask.create(project, 'copyBin')
-    .from('scripts/dspm')
-    .into('build/dspm');
+  NpmScriptTask.create(project, 'processBin')
+    .command('node scripts/processDspm.js && chmod +x build/dspm')
+    .env('DSPM_VERSION', process.env.TRAVIS_TAG || '1.0.0');
 
   ArchiveTask.create(project, 'distArchive')
     .from('./build/dist')
@@ -26,5 +26,5 @@ module.exports = (project) => {
     .into('build/dspm.tar.gz')
     .useGzip()
     .dependsOn('installDist')
-    .dependsOn('copyBin');
+    .dependsOn('processBin');
 };
