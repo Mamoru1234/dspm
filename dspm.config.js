@@ -2,12 +2,9 @@ const { join } = require('path');
 const { ArchiveTask } = require('./build/dist/main/tasks/ArchiveTask');
 const { InstallTask } = require('./build/dist/main/tasks/InstallTask');
 const { NpmScriptTask } = require('./build/dist/main/tasks/NpmScriptTask');
-const { applyJSProjectPlugin } = require('./build/dist/main/plugins/JSProjectPlugin');
 const { FSLockProvider } = require('./build/dist/main/caches/FSLockProvider');
 
 module.exports = (project) => {
-  applyJSProjectPlugin(project);
-
   const lockProviders = project.ensureNameSpace('lock_providers');
   lockProviders.setItem('prod', new FSLockProvider(join(project.getProjectPath(), 'dspm.prod.lock.json')));
 
@@ -18,7 +15,7 @@ module.exports = (project) => {
 
   NpmScriptTask.create(project, 'processBin')
     .command('node scripts/processDspm.js && chmod +x build/dspm')
-    .env('DSPM_VERSION', process.env.TRAVIS_TAG || '1.0.0');
+    .env('DSPM_VERSION', process.env.TRAVIS_TAG || 'local');
 
   ArchiveTask.create(project, 'distArchive')
     .from('./build/dist')

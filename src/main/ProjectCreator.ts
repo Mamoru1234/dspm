@@ -1,6 +1,9 @@
-import {isPlainObject, mapValues} from 'lodash';
+import {props} from 'bluebird';
+import fs from 'fs-extra';
+import {get, has, mapValues} from 'lodash';
 import {Provider} from 'nconf';
 import {join} from 'path';
+import {applyJSProjectPlugin} from './plugins/JSProjectPlugin';
 import {Project} from './Project';
 
 function protectCicles(projectPath: string, evaluatedPaths: string[]) {
@@ -11,18 +14,10 @@ function protectCicles(projectPath: string, evaluatedPaths: string[]) {
 
 type ProjectConfigurator = (project: Project) => void;
 
-function isSimpleConfiguration(configuration: any): configuration is ProjectConfigurator {
+function isConfiguration(configuration: any): configuration is ProjectConfigurator {
   return typeof configuration === 'function';
 }
 
-interface ProjectConfig {
-  configurator: ProjectConfigurator;
-  subProjects: {[key: string]: string};
-}
-
-function isComplexConfiguration(configuration: any): configuration is ProjectConfig {
-  return typeof configuration.configurator === 'function' && isPlainObject(configuration.subProjects);
-}
 const ENV_PREFIX = 'DSPM_';
 
 const envTransform = ({ key, value }: {key: string, value: string}) => {
@@ -35,7 +30,44 @@ const envTransform = ({ key, value }: {key: string, value: string}) => {
   return false;
 };
 
-function createProject(projectPath: string, evaluatedPaths: string[]): Project {
+const PLUGINS: any = {
+  jsProject: applyJSProjectPlugin,
+};
+
+async function getPackageInfo(project: Project): Promise<any> {
+  const packageInfoPath = join(project.getProjectPath(), 'package.json');
+  const hasJson = await fs.pathExists(packageInfoPath);
+  if (!hasJson) {
+    throw new Error(`No package.json in: ${project.getProjectPath()}`);
+  }
+  return await fs.readJson(packageInfoPath);
+}
+
+function applyPlugins(project: Project, packageInfo: any, plugins: any) {
+  if (!has(packageInfo, 'dspm.plugins')) {
+    throw new Error(`You should define dspm.plugins section as at least empty array`);
+  }
+  const pluginsNames: string[] = get(packageInfo, 'dspm.plugins');
+  pluginsNames.forEach((pluginName: string) => {
+    if (!has(plugins, pluginName)) {
+      throw new Error(`Unknown plugin: ${pluginName}`);
+    }
+    plugins[pluginName](project);
+  });
+}
+
+async function ensureSubProjects(project: Project, packageInfo: any, evaluatedPaths: string[]) {
+  if (!has(packageInfo, 'dspm.subProjects')) {
+    return;
+  }
+  const newEvaluatedPath = evaluatedPaths.concat(project.getProjectPath());
+  const subProjects = mapValues(get(packageInfo, 'dspm.subProjects'), (subPath) => {
+    return createProject(join(project.getProjectPath(), subPath), newEvaluatedPath);
+  });
+  project.setSubProjects(await props(subProjects));
+}
+
+async function createProject(projectPath: string, evaluatedPaths: string[]): Promise<Project> {
   protectCicles(projectPath, evaluatedPaths);
   const provider = new Provider();
   provider
@@ -47,25 +79,23 @@ function createProject(projectPath: string, evaluatedPaths: string[]): Project {
 
   const project = new Project(provider, projectPath);
 
+  const packageInfo = await getPackageInfo(project);
+
+  applyPlugins(project, packageInfo, PLUGINS);
+
+  await ensureSubProjects(project, packageInfo, evaluatedPaths);
+
   const configuration = require(join(projectPath, './dspm.config.js'));
-  if (isSimpleConfiguration(configuration)) {
+
+  if (isConfiguration(configuration)) {
     configuration(project);
-    return project;
-  }
-  if (isComplexConfiguration(configuration)) {
-    const newEvaluatedPath = evaluatedPaths.concat(projectPath);
-    const subProjects = mapValues(configuration.subProjects, (subPath) => {
-      return createProject(join(projectPath, subPath), newEvaluatedPath);
-    });
-    project.setSubProjects(subProjects);
-    configuration.configurator(project);
     return project;
   }
   throw new Error('Wrong configuration');
 }
 
 export class ProjectCreator {
-  public static createProject(projectPath: string): Project {
+  public static createProject(projectPath: string): Promise<Project> {
     return createProject(projectPath, []);
   }
 }

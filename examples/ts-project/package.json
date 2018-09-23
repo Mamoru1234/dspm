@@ -9,6 +9,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "dspm": {
+    "plugins": ["jsProject"]
+  },
   "devDependencies": {
     "typescript": "^2.7.2"
   },

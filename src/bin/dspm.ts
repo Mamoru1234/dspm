@@ -4,8 +4,8 @@ import {error} from 'util';
 
 import { ProjectCreator } from '../main/ProjectCreator';
 
-try {
-  const project = ProjectCreator.createProject(resolve('.'));
+async function main() {
+  const project = await ProjectCreator.createProject(resolve('.'));
   const taskName = process.argv[2];
 
   const task = project.getTask(taskName);
@@ -21,8 +21,11 @@ try {
     error(`Task ${taskName} not found in project`);
     process.exit(-1);
   }
-} catch (e) {
-  error('Error during project evaluation');
-  error(e);
-  process.exit(-1);
 }
+
+main()
+  .catch((e) => {
+    error('Error during project evaluation');
+    error(e);
+    process.exit(-1);
+  });
