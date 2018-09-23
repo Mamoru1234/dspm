@@ -4,6 +4,7 @@ import size from 'lodash/size';
 import {Project} from '../Project';
 import {Task} from '../Task';
 import {executeCommand} from '../utils/CmdUtils';
+import {normalizePath} from '../utils/PathUtils';
 
 export class CmdTask extends Task {
 
@@ -31,7 +32,7 @@ export class CmdTask extends Task {
   }
 
   public addToPath(entry: string): CmdTask {
-    this._pathItems.push(entry);
+    this._pathItems.push(normalizePath(this.project.getProjectPath(), entry));
     return this;
   }
 

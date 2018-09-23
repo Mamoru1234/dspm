@@ -5,6 +5,7 @@ import tar, {PackOptions} from 'tar-fs';
 import {createGzip} from 'zlib';
 import {Project} from '../Project';
 import {Task} from '../Task';
+import {normalizePath} from '../utils/PathUtils';
 
 interface PackItem {
   sourceFolder: string;
@@ -38,13 +39,13 @@ export class ArchiveTask extends Task {
   public from(sourceFolder: string, options?: PackOptions): this {
     this._packItems.push({
       options,
-      sourceFolder: join(this.project.getProjectPath(), sourceFolder),
+      sourceFolder: normalizePath(this.project.getProjectPath(), sourceFolder),
     });
     return this;
   }
 
   public into(targetPath: string): this {
-    this._targetPath = join(this.project.getProjectPath(), targetPath);
+    this._targetPath = normalizePath(this.project.getProjectPath(), targetPath);
     return this;
   }
 

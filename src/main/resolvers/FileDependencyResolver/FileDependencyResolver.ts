@@ -3,12 +3,12 @@ import concatStreamFactory from 'concat-stream';
 import fs from 'fs-extra';
 import gunzip from 'gunzip-maybe';
 import { get } from 'lodash';
-import path from 'path';
 import {extract} from 'tar-fs';
 import { extract as extractFactory, Headers } from 'tar-stream';
 
 import {DepTreeNode} from '../../utils/DepTreeNode';
 import {PackageDescription} from '../../utils/package/PackageDescription';
+import {normalizePath} from '../../utils/PathUtils';
 import {DependencyResolver, PackageMetaData} from '../DependencyResolver';
 import ReadableStream = NodeJS.ReadableStream;
 
@@ -122,6 +122,6 @@ export class FileDependencyResolver implements DependencyResolver {
     });
   }
   private _getPath(relativePath: string): string {
-    return path.join(this._basePath, relativePath);
+    return normalizePath(this._basePath, relativePath);
   }
 }

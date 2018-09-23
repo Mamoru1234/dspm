@@ -11,6 +11,7 @@ import {DepTreeNode} from '../utils/DepTreeNode';
 import {ExtractTreeProvider} from '../utils/ExtractTreeProvider';
 import {PackageDescription} from '../utils/package/PackageDescription';
 import {convertDependenciesMap} from '../utils/package/PackageJsonParse';
+import {normalizePath} from '../utils/PathUtils';
 
 const rimrafAsync = Promise.promisify(rimraf);
 
@@ -46,7 +47,7 @@ export class InstallTask extends Task {
   }
 
   public targetPath(path: string) {
-    this._targetPath = join(this.project.getProjectPath(), path);
+    this._targetPath = normalizePath(this.project.getProjectPath(), path);
     return this;
   }
 

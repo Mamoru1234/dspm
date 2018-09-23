@@ -25,3 +25,4 @@ module.exports = (project) => {
     .dependsOn('installDist')
     .dependsOn('processBin');
 };
+1

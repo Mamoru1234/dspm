@@ -1,9 +1,9 @@
 import Promise from 'bluebird';
 import {existsSync} from 'fs';
-import {join} from 'path';
 import rimraf from 'rimraf';
 import {Project} from '../Project';
 import {Task} from '../Task';
+import {normalizePath} from '../utils/PathUtils';
 
 const rimrafAsync = Promise.promisify(rimraf);
 
@@ -26,7 +26,7 @@ export class CleanTask extends Task {
   }
 
   public clean(glob: string): CleanTask {
-    this._cleanGlobs.push(join(this.project.getProjectPath(), glob));
+    this._cleanGlobs.push(normalizePath(this.project.getProjectPath(), glob));
     return this;
   }
 
