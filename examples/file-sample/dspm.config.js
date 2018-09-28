@@ -1,11 +1,12 @@
 const {CopyTask} = require('./.dspm/dist/main/tasks/CopyTask');
-const {join} = require('path');
 
 module.exports = (project) => {
+  const packageTask = project.getSubProject('tsProject').getTask('package');
+
   CopyTask.create(project, 'processModules')
-    .from(join(project.getSubProject('tsProject').getProjectPath(), 'build/ts-project.tgz'))
+    .from(packageTask.getTargetPath())
     .into('build/libs/ts-project.tgz')
-    .dependsOn(project.getSubProject('tsProject').getTask('package'));
+    .dependsOn(packageTask);
 
   project.getTask('install')
     .dependsOn('processModules')

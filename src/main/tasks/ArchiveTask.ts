@@ -49,6 +49,10 @@ export class ArchiveTask extends Task {
     return this;
   }
 
+  public getTargetPath(): string {
+    return this._targetPath;
+  }
+
   public useGzip(): this {
     this._transformFactory = (stream) => {
       const zip = createGzip();
