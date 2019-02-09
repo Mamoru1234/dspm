@@ -1,10 +1,8 @@
 import Promise from 'bluebird';
-import {copy} from 'fs-extra';
 import {Project} from '../Project';
 import {Task} from '../Task';
+import { copyAsync } from '../utils/AsyncFsUtils';
 import {normalizePath} from '../utils/PathUtils';
-
-const copyAsync = Promise.promisify(copy);
 
 export class CopyTask extends Task {
   public static create(project: Project, name: string): CopyTask {
