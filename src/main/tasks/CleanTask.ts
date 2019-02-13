@@ -1,11 +1,9 @@
 import Promise from 'bluebird';
 import {existsSync} from 'fs';
-import rimraf from 'rimraf';
 import {Project} from '../Project';
 import {Task} from '../Task';
+import {rimrafAsync} from '../utils/AsyncFsUtils';
 import {normalizePath} from '../utils/PathUtils';
-
-const rimrafAsync = Promise.promisify(rimraf);
 
 export class CleanTask extends Task {
 

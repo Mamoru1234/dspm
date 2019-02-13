@@ -1,13 +1,11 @@
 import Promise from 'bluebird';
-import {existsSync, readFile, writeFile} from 'fs';
+import {existsSync} from 'fs';
 import map from 'lodash/map';
 import noop from 'lodash/noop';
+import {readFileAsync, writeFileAsync} from '../utils/AsyncFsUtils';
 import {DepTreeNode} from '../utils/DepTreeNode';
 import {PackageDescription} from '../utils/package/PackageDescription';
 import {LockProvider} from './LockProvider';
-
-const readFileAsync = Promise.promisify(readFile);
-const writeFileAsync = Promise.promisify(writeFile);
 
 interface PureDepTreeNode {
   packageName?: string;

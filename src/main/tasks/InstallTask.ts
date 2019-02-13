@@ -1,19 +1,17 @@
 import Promise from 'bluebird';
 import {join} from 'path';
-import rimraf from 'rimraf';
 
 import {LockProvider} from '../caches/LockProvider';
 import {Project} from '../Project';
 import {DependencyResolver} from '../resolvers/DependencyResolver';
 import {Task} from '../Task';
+import { rimrafAsync } from '../utils/AsyncFsUtils';
 import {DepTreeBuilder} from '../utils/DepTreeBuilder';
 import {DepTreeNode} from '../utils/DepTreeNode';
 import {ExtractTreeProvider} from '../utils/ExtractTreeProvider';
 import {PackageDescription} from '../utils/package/PackageDescription';
 import {convertDependenciesMap} from '../utils/package/PackageJsonParse';
 import {normalizePath} from '../utils/PathUtils';
-
-const rimrafAsync = Promise.promisify(rimraf);
 
 export class InstallTask extends Task {
 
