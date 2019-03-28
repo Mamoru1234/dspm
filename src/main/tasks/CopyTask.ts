@@ -1,4 +1,6 @@
 import Promise from 'bluebird';
+import { basename, join } from 'path';
+import { log } from 'util';
 import {Project} from '../Project';
 import {Task} from '../Task';
 import { copyAsync } from '../utils/AsyncFsUtils';
@@ -11,11 +13,17 @@ export class CopyTask extends Task {
     return task;
   }
 
-  private _fromPath: string = '';
+  private _fromPaths: string[] = [];
+  private _fromFiles: string[] = [];
   private _targetPath: string = '';
 
   public from(source: string): this {
-    this._fromPath = normalizePath(this.project.getProjectPath(), source);
+    this._fromPaths.push(normalizePath(this.project.getProjectPath(), source));
+    return this;
+  }
+
+  public fromFile(source: string): this {
+    this._fromFiles.push(normalizePath(this.project.getProjectPath(), source));
     return this;
   }
 
@@ -25,12 +33,22 @@ export class CopyTask extends Task {
   }
 
   public exec(): Promise<any> {
-    if (!this._fromPath) {
+    if (this._fromPaths.length === 0) {
       throw new Error(`You should specify from path`);
     }
     if (!this._targetPath) {
       throw new Error(`You should specify target path`);
     }
-    return copyAsync(this._fromPath, this._targetPath);
+    return Promise.mapSeries(this._fromPaths, (path: string) => {
+      log(`Copying ${path} into ${this._targetPath}`);
+      return copyAsync(path, this._targetPath);
+    })
+      .then(() => {
+        return Promise.mapSeries(this._fromFiles, (file: string) => {
+          log(`Copying file ${file} into ${this._targetPath}`);
+          const fileName = basename(file);
+          return copyAsync(file, join(this._targetPath, fileName));
+        });
+      });
   }
 }

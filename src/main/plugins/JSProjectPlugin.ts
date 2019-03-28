@@ -8,6 +8,7 @@ import {FSLockProvider} from '../caches/FSLockProvider';
 import {Project} from '../Project';
 import {FileDependencyResolver} from '../resolvers/FileDependencyResolver';
 import {NpmDependencyResolver} from '../resolvers/NpmDependencyResolver';
+import {CleanTask} from '../tasks/CleanTask';
 import {InstallTask} from '../tasks/InstallTask';
 import {NpmScriptTask} from '../tasks/NpmScriptTask';
 
@@ -36,6 +37,9 @@ export function applyJSProjectPlugin(project: Project) {
 
   InstallTask.create(project, 'install')
     .dependencies(dependencies);
+
+  CleanTask.create(project, 'clean')
+    .clean('build');
 
   forEach(packageJson.scripts, (command: string, scriptName: string) => {
     NpmScriptTask.create(project, scriptName)

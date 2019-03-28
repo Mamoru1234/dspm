@@ -4,6 +4,7 @@ import {get, has, mapValues} from 'lodash';
 import {Provider} from 'nconf';
 import {join} from 'path';
 import {applyJSProjectPlugin} from './plugins/JSProjectPlugin';
+import {applyNpmPlugin} from './plugins/NpmPlugin';
 import {Project} from './Project';
 
 function protectCicles(projectPath: string, evaluatedPaths: string[]) {
@@ -32,6 +33,7 @@ const envTransform = ({ key, value }: {key: string, value: string}) => {
 
 const PLUGINS: any = {
   jsProject: applyJSProjectPlugin,
+  npm: applyNpmPlugin,
 };
 
 async function getPackageInfo(project: Project): Promise<any> {

@@ -9,7 +9,7 @@ export function parseDependencyItem(
   dependencyDescription: any,
 ): PackageDescription {
   if (isObject(dependencyDescription)) {
-    return dependencyDescription;
+    return dependencyDescription as any;
   }
   if (!isString(dependencyDescription)) {
     throw new Error('Dependency description should be string or object');
