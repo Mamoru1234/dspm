@@ -9,7 +9,7 @@ Inspired by [Gradle](https://gradle.org/)
 * move to your project directory.
 * Ubuntu:
 ```bash
-wget https://github.com/Mamoru1234/dspm/releases/download/0.2.1/dspm
+wget https://github.com/Mamoru1234/dspm/releases/download/0.3.0/dspm
 chmod +x ./dspm
 ```
 
