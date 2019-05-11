@@ -5,14 +5,13 @@ import tar, {PackOptions} from 'tar-fs';
 import {createGzip} from 'zlib';
 import {Project} from '../Project';
 import {Task} from '../Task';
+import {ensureDirAsync} from '../utils/AsyncFsUtils';
 import {normalizePath} from '../utils/PathUtils';
 
 interface PackItem {
   sourceFolder: string;
   options?: PackOptions;
 }
-
-const ensureDirAsync = Promise.promisify(fs.ensureDir);
 
 export class ArchiveTask extends Task {
 

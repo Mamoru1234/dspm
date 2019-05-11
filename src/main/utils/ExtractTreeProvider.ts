@@ -1,17 +1,15 @@
 import Promise from 'bluebird';
-import {chmodSync, constants, ensureDir} from 'fs-extra';
+import {chmodSync, constants} from 'fs-extra';
 import {get, noop, once} from 'lodash';
 import {join} from 'path';
 import {log} from 'util';
 
 import {Namespace} from '../Namespace';
 import {DependencyResolver} from '../resolvers/DependencyResolver';
-import {symLinkAsync} from './AsyncFsUtils';
+import {ensureDirAsync, symLinkAsync} from './AsyncFsUtils';
 import {executeCommand} from './CmdUtils';
 import {DepTreeNode} from './DepTreeNode';
 import {breadTraversal, deepTraversal} from './DepTreeUtils';
-
-const ensureDirAsync = Promise.promisify(ensureDir);
 
 interface NodeContext {
   parentPath: string;
