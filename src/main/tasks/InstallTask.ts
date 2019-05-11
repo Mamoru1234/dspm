@@ -67,10 +67,9 @@ export class InstallTask extends Task {
 
     const lockProvider = lockProviders.getItem(this._lockProviderName);
 
-    const rootPromise: Promise<DepTreeNode> = this._getDepTree(lockProvider);
     const targetPath = join(this._targetPath, this._modulePrefix);
 
-    return rootPromise
+    return this._getDepTree(lockProvider)
       .tap(() => rimrafAsync(targetPath))
       .then((root: DepTreeNode) => {
         return new ExtractTreeProvider(this._targetPath, this._modulePrefix, resolvers).extractTree(root);

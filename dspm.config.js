@@ -14,6 +14,7 @@ module.exports = (project) => {
     .targetPath('./build/dist');
 
   NpmScriptTask.create(project, 'processBin')
+    .installTask('installDist')
     .command('node scripts/processDspm.js && chmod +x build/dspm')
     .env('DSPM_VERSION', process.env.TRAVIS_TAG || 'local');
 

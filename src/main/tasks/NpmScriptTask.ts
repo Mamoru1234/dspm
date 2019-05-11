@@ -20,6 +20,11 @@ export class NpmScriptTask extends CmdTask {
     super(name, project);
   }
 
+  public installTask(name: string): this {
+    this._installTaskName = name;
+    return this;
+  }
+
   public run(): Promise<any> {
     const installTask = this.project.getTask<InstallTask>(this._installTaskName);
     this.dependsOn(installTask);
