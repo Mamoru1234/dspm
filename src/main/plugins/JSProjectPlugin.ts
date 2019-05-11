@@ -2,18 +2,17 @@ import forEach from 'lodash/forEach';
 import merge from 'lodash/merge';
 import {homedir} from 'os';
 import {join} from 'path';
-import {log} from 'util';
 
 import {FSLockProvider} from '../caches/FSLockProvider';
 import {Project} from '../Project';
 import {FileDependencyResolver} from '../resolvers/FileDependencyResolver';
 import {NpmDependencyResolver} from '../resolvers/NpmDependencyResolver';
 import {CleanTask} from '../tasks/CleanTask';
+import {DependencyResolveTask} from '../tasks/DependencyResolveTask';
 import {InstallTask} from '../tasks/InstallTask';
 import {NpmScriptTask} from '../tasks/NpmScriptTask';
 
 export function applyJSProjectPlugin(project: Project) {
-  log(project.getProperty('cache:path'));
   const cachePath = project.getProperty('cache:path', join(homedir(), '.cache', 'dspm'));
   const npmDependencyResolver = new NpmDependencyResolver({
     cacheFolder: cachePath,
@@ -35,8 +34,10 @@ export function applyJSProjectPlugin(project: Project) {
   const packageJson = require(join(project.getProjectPath(), 'package.json'));
   const dependencies = merge({}, packageJson.dependencies, packageJson.devDependencies);
 
-  InstallTask.create(project, 'install')
+  DependencyResolveTask.create(project, 'dependencyResolve')
     .dependencies(dependencies);
+
+  InstallTask.create(project, 'install');
 
   CleanTask.create(project, 'clean')
     .clean('build');

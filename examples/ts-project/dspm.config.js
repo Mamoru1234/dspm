@@ -1,11 +1,7 @@
 const {ArchiveTask} = require('./.dspm/dist/main/tasks/ArchiveTask');
-const {CleanTask} = require('./.dspm/dist/main/tasks/CleanTask');
 const {NpmScriptTask} = require('./.dspm/dist/main/tasks/NpmScriptTask');
 
 module.exports = (project) => {
-  CleanTask.create(project, 'clean')
-    .clean('build');
-
   NpmScriptTask.create(project, 'build')
     .dependsOn('clean')
     .command('tsc');

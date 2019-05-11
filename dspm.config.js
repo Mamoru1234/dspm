@@ -1,5 +1,6 @@
 const { join } = require('path');
 const { ArchiveTask } = require('./build/dist/main/tasks/ArchiveTask');
+const { DependencyResolveTask } = require('./build/dist/main/tasks/DependencyResolveTask');
 const { InstallTask } = require('./build/dist/main/tasks/InstallTask');
 const { NpmScriptTask } = require('./build/dist/main/tasks/NpmScriptTask');
 const { FSLockProvider } = require('./build/dist/main/caches/FSLockProvider');
@@ -7,10 +8,12 @@ const { FSLockProvider } = require('./build/dist/main/caches/FSLockProvider');
 module.exports = (project) => {
   const lockProviders = project.ensureNameSpace('lock_providers');
   lockProviders.setItem('prod', new FSLockProvider(join(project.getProjectPath(), 'dspm.prod.lock.json')));
+  DependencyResolveTask.create(project, 'dependencyProd')
+    .lockProvider('prod')
+    .dependencies(require('./package').dependencies);
 
   InstallTask.create(project, 'installDist')
-    .lockProvider('prod')
-    .dependencies(require('./package').dependencies)
+    .resolveTask('dependencyProd')
     .targetPath('./build/dist');
 
   NpmScriptTask.create(project, 'processBin')

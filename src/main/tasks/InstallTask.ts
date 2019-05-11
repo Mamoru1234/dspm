@@ -1,17 +1,12 @@
 import Promise from 'bluebird';
 import {join} from 'path';
-
-import {LockProvider} from '../caches/LockProvider';
 import {Project} from '../Project';
 import {DependencyResolver} from '../resolvers/DependencyResolver';
 import {Task} from '../Task';
-import { rimrafAsync } from '../utils/AsyncFsUtils';
-import {DepTreeBuilder} from '../utils/DepTreeBuilder';
-import {DepTreeNode} from '../utils/DepTreeNode';
+import {rimrafAsync} from '../utils/AsyncFsUtils';
 import {ExtractTreeProvider} from '../utils/ExtractTreeProvider';
-import {PackageDescription} from '../utils/package/PackageDescription';
-import {convertDependenciesMap} from '../utils/package/PackageJsonParse';
 import {normalizePath} from '../utils/PathUtils';
+import {DependencyResolveTask} from './DependencyResolveTask';
 
 export class InstallTask extends Task {
 
@@ -26,10 +21,8 @@ export class InstallTask extends Task {
 
   public _targetPath: string;
   public _modulePrefix: string = 'node_modules';
-  private _packages: {[key: string]: PackageDescription} = {};
   private _resolversNamespace = 'resolvers';
-  private _lockProvidersNamespace = 'lock_providers';
-  private _lockProviderName = 'default';
+  private _resolveTask = 'dependencyResolve';
 
   constructor(
     name: string,
@@ -49,61 +42,25 @@ export class InstallTask extends Task {
     return this;
   }
 
-  public lockProvider(name: string) {
-    this._lockProviderName = name;
+  public resolveTask(name: string): this {
+    this._resolveTask = name;
     return this;
   }
 
-  public dependencies(description: {[key: string]: any}) {
-    const resolvers = this._project.getNamespace<DependencyResolver>(this._resolversNamespace);
-    const parsedDependencies = convertDependenciesMap(resolvers, description);
-    Object.assign(this._packages, parsedDependencies);
-    return this;
+  public run(): Promise<any> {
+    this.dependsOn(this._resolveTask);
+    return super.run();
   }
 
   public exec(): Promise<any> {
-    const resolvers = this._project.getNamespace<DependencyResolver>(this._resolversNamespace);
-    const lockProviders = this._project.getNamespace<LockProvider>(this._lockProvidersNamespace);
-
-    const lockProvider = lockProviders.getItem(this._lockProviderName);
-
     const targetPath = join(this._targetPath, this._modulePrefix);
 
-    return this._getDepTree(lockProvider)
-      .tap(() => rimrafAsync(targetPath))
-      .then((root: DepTreeNode) => {
-        return new ExtractTreeProvider(this._targetPath, this._modulePrefix, resolvers).extractTree(root);
-      });
-  }
-
-  private _getDepTree(
-    lockProvider: LockProvider,
-  ) {
-    const updateLock = this._project.getProperty('updateLock', false);
-
-    if (updateLock) {
-      return this._resolveRoot(lockProvider);
-    }
-
-    return lockProvider.exists()
-      .then((lockExists: boolean) => {
-        if (lockExists) {
-          return lockProvider.loadDepTree();
-        }
-        return this._resolveRoot(lockProvider);
-      });
-  }
-
-  private _resolveRoot(
-    lockProvider: LockProvider,
-  ): Promise<DepTreeNode> {
-    const resolvers = this._project.getNamespace<DependencyResolver>(this._resolversNamespace);
-    const depTreeBuilder = new DepTreeBuilder(resolvers);
-    depTreeBuilder.resolveDependencies(this._packages);
-    return depTreeBuilder.getRoot()
-      .then((root: DepTreeNode) => {
-        return lockProvider.saveDepTree(root)
-          .then(() => root);
+    return rimrafAsync(targetPath)
+      .then(() => {
+        const resolvers = this._project.getNamespace<DependencyResolver>(this._resolversNamespace);
+        const root = this._project.getTask<DependencyResolveTask>(this._resolveTask).getRoot();
+        const extractTreeProvider = new ExtractTreeProvider(this._targetPath, this._modulePrefix, resolvers);
+        return extractTreeProvider.extractTree(root);
       });
   }
 }
