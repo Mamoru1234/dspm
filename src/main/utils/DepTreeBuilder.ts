@@ -54,12 +54,16 @@ export class DepTreeBuilder {
   private _root: DepTreeNode = {
     children: [],
   };
+  private _rootReceived: boolean = false;
   private _queue: ResolutionQueue = new ResolutionQueue();
 
   constructor(
     private _resolvers: Namespace<DependencyResolver>) {}
 
   public getRoot(): Promise<DepTreeNode> {
+    if (this._rootReceived) {
+      throw new Error('Getting root twice is wrong');
+    }
     return this._resolveQueue()
       .then(() => {
         return this._root;

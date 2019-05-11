@@ -11,6 +11,7 @@ import {Namespace} from '../Namespace';
 import {DepTreeBuilder} from './DepTreeBuilder';
 import {DepTreeNode} from './DepTreeNode';
 import {convertDependenciesMap} from './package/PackageJsonParse';
+import Done = Mocha.Done;
 
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
@@ -24,8 +25,7 @@ interface AssertTreeNode {
 }
 
 interface GenerationConfig {
-  message: string;
-  skip?: boolean;
+  done: Done;
   resolvers: {[key: string]: ResolutionParam[]};
   resolutionCalls: {
     dependencies: {[key: string]: string};
@@ -46,32 +46,25 @@ function assertTreeNode(depNode: DepTreeNode, testNode: AssertTreeNode) {
 }
 
 function generateResolutionTest(getClock: () => SinonFakeTimers, config: GenerationConfig) {
-  if (config.skip) {
-    // just to have mention in log that we skipped test case
-    it.skip(config.message, () => {});
-    return;
-  }
-  it(config.message, (done: any) => {
-    const resolvers = new Namespace<TestDepResolver>();
-    forEach(config.resolvers, (resolveConfig: ResolutionParam[], resolverName: string) => {
-      resolvers.setItem(resolverName, new TestDepResolver(resolveConfig));
-    });
-    const builder = new DepTreeBuilder(resolvers);
-    config.resolutionCalls.forEach(({ dependencies }) => {
-      return builder.resolveDependencies(convertDependenciesMap(resolvers, dependencies));
-    });
-    builder.getRoot()
-      .then((root) => {
-        assertTreeNode(root, config.root);
-        done();
-      })
-      .catch(done);
-    getClock().runAll();
+  const { done } = config;
+  const resolvers = new Namespace<TestDepResolver>();
+  forEach(config.resolvers, (resolveConfig: ResolutionParam[], resolverName: string) => {
+    resolvers.setItem(resolverName, new TestDepResolver(resolveConfig));
   });
+  const builder = new DepTreeBuilder(resolvers);
+  config.resolutionCalls.forEach(({ dependencies }) => {
+    return builder.resolveDependencies(convertDependenciesMap(resolvers, dependencies));
+  });
+  builder.getRoot()
+    .then((root) => {
+      assertTreeNode(root, config.root);
+      done();
+    })
+    .catch(done);
+  getClock().runAll();
 }
 
-// FIXME fix types in test
-describe.skip('utils/DepTreeBuilder', () => {
+describe('utils/DepTreeBuilder', () => {
   let clock: SinonFakeTimers;
   beforeEach(() => {
     clock = sinon.useFakeTimers();
@@ -79,249 +72,253 @@ describe.skip('utils/DepTreeBuilder', () => {
   afterEach(() => {
     clock.restore();
   });
-  generateResolutionTest(() => clock, {
-    // skip: true,
-    message: 'Simple resolution',
-    resolvers: {
-      'npm': [
-        {
-          description: '^1.0.0',
-          time: 100,
-          name: 'a',
-          dependencies: {
-            b: '^1.0.0'
+  it('Simple resolution', (done: Done) => {
+    generateResolutionTest(() => clock, {
+      done,
+      resolvers: {
+        'npm': [
+          {
+            description: '^1.0.0',
+            time: 100,
+            name: 'a',
+            dependencies: {
+              b: '^1.0.0'
+            },
+            resolvedVersion: '1.0.1',
           },
-          resolvedVersion: '1.0.1',
-        },
-        {
-          description: '^1.0.0',
-          time: 10,
-          name: 'b',
-          dependencies: {
+          {
+            description: '^1.0.0',
+            time: 10,
+            name: 'b',
+            dependencies: {
+            },
+            resolvedVersion: '1.1.1',
           },
-          resolvedVersion: '1.1.1',
-        },
-      ]
-    },
-    resolutionCalls: [
-      {
-        dependencies: {
-          a: '^1.0.0',
-        },
+        ]
       },
-    ],
-    root: {
-      children: [
+      resolutionCalls: [
         {
-          packageName: 'a',
-          packageVersion: '1.0.1',
-          children: [],
+          dependencies: {
+            a: '^1.0.0',
+          },
         },
-        {
-          packageVersion: '1.1.1',
-          packageName: 'b',
-          children: [],
-        }
       ],
-    },
+      root: {
+        children: [
+          {
+            packageName: 'a',
+            packageVersion: '1.0.1',
+            children: [],
+          },
+          {
+            packageVersion: '1.1.1',
+            packageName: 'b',
+            children: [],
+          }
+        ],
+      },
+    });
   });
   describe('Dep conflicts', () => {
-    generateResolutionTest(() => clock, {
-      // skip: true,
-      message: 'a has b which conflicts with root one',
-      resolvers: {
-        'default': [
-          {
-            description: '^1.0.0',
-            time: 100,
-            resolvedVersion: '1.0.1',
-            name: 'a',
-            dependencies: {
-              b: '^2.0.0'
+    it('a has b which conflicts with root one', (done: Done) => {
+      generateResolutionTest(() => clock, {
+        done,
+        resolvers: {
+          'npm': [
+            {
+              description: '^1.0.0',
+              time: 100,
+              resolvedVersion: '1.0.1',
+              name: 'a',
+              dependencies: {
+                b: '^2.0.0'
+              },
             },
-          },
-          {
-            description: '^2.0.0',
-            time: 10,
-            resolvedVersion: '2.1.1',
-            name: 'b',
-            dependencies: {
+            {
+              description: '^2.0.0',
+              time: 10,
+              resolvedVersion: '2.1.1',
+              name: 'b',
+              dependencies: {
+              },
             },
-          },
-          {
-            description: '^1.0.0',
-            time: 10,
-            resolvedVersion: '1.1.1',
-            name: 'b',
-            dependencies: {
+            {
+              description: '^1.0.0',
+              time: 10,
+              resolvedVersion: '1.1.1',
+              name: 'b',
+              dependencies: {
+              },
             },
-          },
-        ]
-      },
-      resolutionCalls: [
-        {
-          dependencies: {
-            a: '^1.0.0',
-            b: '^1.0.0',
-          },
+          ]
         },
-      ],
-      root: {
-        children: [
+        resolutionCalls: [
           {
-            packageName: 'a',
-            packageVersion: '1.0.1',
-            children: [
-              {
-                packageVersion: '2.1.1',
-                packageName: 'b',
-                children: [],
-              }
-            ],
+            dependencies: {
+              a: '^1.0.0',
+              b: '^1.0.0',
+            },
           },
-          {
-            packageVersion: '1.1.1',
-            packageName: 'b',
-            children: [],
-          }
         ],
-      },
+        root: {
+          children: [
+            {
+              packageName: 'a',
+              packageVersion: '1.0.1',
+              children: [
+                {
+                  packageVersion: '2.1.1',
+                  packageName: 'b',
+                  children: [],
+                }
+              ],
+            },
+            {
+              packageVersion: '1.1.1',
+              packageName: 'b',
+              children: [],
+            }
+          ],
+        },
+      });
     });
-    generateResolutionTest(() => clock, {
-      message: 'a has b which conflicts with root one and old b resolves slowly',
-      // skip: true,
-      resolvers: {
-        'default': [
-          {
-            description: '^1.0.0',
-            time: 100,
-            resolvedVersion: '1.0.1',
-            name: 'a',
-            dependencies: {
-              b: '^2.0.0'
+    it('a has b which conflicts with root one and old b resolves slowly', (done: Done) => {
+      generateResolutionTest(() => clock, {
+        done,
+        resolvers: {
+          'npm': [
+            {
+              description: '^1.0.0',
+              time: 100,
+              resolvedVersion: '1.0.1',
+              name: 'a',
+              dependencies: {
+                b: '^2.0.0'
+              },
             },
-          },
-          {
-            description: '^2.0.0',
-            time: 10,
-            resolvedVersion: '2.1.1',
-            name: 'b',
-            dependencies: {
+            {
+              description: '^2.0.0',
+              time: 10,
+              resolvedVersion: '2.1.1',
+              name: 'b',
+              dependencies: {
+              },
             },
-          },
-          {
-            description: '^1.0.0',
-            time: 10000,
-            resolvedVersion: '1.1.1',
-            name: 'b',
-            dependencies: {
+            {
+              description: '^1.0.0',
+              time: 10000,
+              resolvedVersion: '1.1.1',
+              name: 'b',
+              dependencies: {
+              },
             },
-          },
-        ]
-      },
-      resolutionCalls: [
-        {
-          dependencies: {
-            a: '^1.0.0',
-            b: '^1.0.0',
-          },
+          ]
         },
-      ],
-      root: {
-        children: [
+        resolutionCalls: [
           {
-            packageName: 'a',
-            packageVersion: '1.0.1',
-            children: [
-              {
-                packageVersion: '2.1.1',
-                packageName: 'b',
-                children: [],
-              }
-            ],
+            dependencies: {
+              a: '^1.0.0',
+              b: '^1.0.0',
+            },
           },
-          {
-            packageVersion: '1.1.1',
-            packageName: 'b',
-            children: [],
-          }
         ],
-      },
+        root: {
+          children: [
+            {
+              packageName: 'a',
+              packageVersion: '1.0.1',
+              children: [
+                {
+                  packageVersion: '2.1.1',
+                  packageName: 'b',
+                  children: [],
+                }
+              ],
+            },
+            {
+              packageVersion: '1.1.1',
+              packageName: 'b',
+              children: [],
+            }
+          ],
+        },
+      });
     });
-    generateResolutionTest(() => clock, {
-      message: 'One of concurrency samples',
-      // skip: true,
-      resolvers: {
-        'default': [
-          {
-            description: '^1.0.0',
-            time: 100,
-            resolvedVersion: '1.0.1',
-            name: 'a',
-            dependencies: {
-              c: '^2.0.0'
+    it('One of concurrency samples', (done: Done) => {
+      generateResolutionTest(() => clock, {
+        done,
+        resolvers: {
+          'npm': [
+            {
+              description: '^1.0.0',
+              time: 100,
+              resolvedVersion: '1.0.1',
+              name: 'a',
+              dependencies: {
+                c: '^2.0.0'
+              },
             },
-          },
-          {
-            description: '^1.0.0',
-            time: 10,
-            resolvedVersion: '1.1.1',
-            name: 'b',
-            dependencies: {
-              'c': '^1.0.0'
+            {
+              description: '^1.0.0',
+              time: 10,
+              resolvedVersion: '1.1.1',
+              name: 'b',
+              dependencies: {
+                'c': '^1.0.0'
+              },
             },
-          },
-          {
-            description: '^2.0.0',
-            time: 10000,
-            resolvedVersion: '2.1.1',
-            name: 'c',
-            dependencies: {
+            {
+              description: '^2.0.0',
+              time: 10000,
+              resolvedVersion: '2.1.1',
+              name: 'c',
+              dependencies: {
+              },
             },
-          },
-          {
-            description: '^1.0.0',
-            time: 10,
-            resolvedVersion: '1.1.1',
-            name: 'c',
-            dependencies: {
+            {
+              description: '^1.0.0',
+              time: 10,
+              resolvedVersion: '1.1.1',
+              name: 'c',
+              dependencies: {
+              },
             },
-          },
-        ]
-      },
-      resolutionCalls: [
-        {
-          dependencies: {
-            a: '^1.0.0',
-            b: '^1.0.0',
-          },
+          ]
         },
-      ],
-      root: {
-        children: [
+        resolutionCalls: [
           {
-            packageName: 'a',
-            packageVersion: '1.0.1',
-            children: [],
+            dependencies: {
+              a: '^1.0.0',
+              b: '^1.0.0',
+            },
           },
-          {
-            packageVersion: '1.1.1',
-            packageName: 'b',
-            children: [
-              {
-                packageName: 'c',
-                packageVersion: '1.1.1',
-                children: [],
-              }
-            ],
-          },
-          {
-            packageName: 'c',
-            packageVersion: '2.1.1',
-            children: [],
-          }
         ],
-      },
+        root: {
+          children: [
+            {
+              packageName: 'a',
+              packageVersion: '1.0.1',
+              children: [],
+            },
+            {
+              packageVersion: '1.1.1',
+              packageName: 'b',
+              children: [
+                {
+                  packageName: 'c',
+                  packageVersion: '1.1.1',
+                  children: [],
+                }
+              ],
+            },
+            {
+              packageName: 'c',
+              packageVersion: '2.1.1',
+              children: [],
+            }
+          ],
+        },
+      });
     });
   });
 });

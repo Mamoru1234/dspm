@@ -53,7 +53,7 @@ export class TestDepResolver implements DependencyResolver{
         options: {},
       };
       this.getMetadataStub
-        .withArgs(resolutionItem.description)
+        .withArgs(this.parseDependencyItem(resolutionItem.name, resolutionItem.description))
         .callsFake(() => {
           return createTimer(resolutionItem.time, metaData)
         });
