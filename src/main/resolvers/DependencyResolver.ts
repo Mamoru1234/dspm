@@ -2,10 +2,10 @@ import Promise from 'bluebird';
 import {DepTreeNode} from '../utils/DepTreeNode';
 import {PackageDescription} from '../utils/package/PackageDescription';
 
-export interface PackageMetaData {
+export interface PackageMetaData<T = any> {
   name: string;
   version: string;
-  options: any;
+  options: T;
   dependencies: {[key: string]: string};
 }
 

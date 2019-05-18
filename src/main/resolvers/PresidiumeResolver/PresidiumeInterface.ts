@@ -21,6 +21,22 @@ export interface PresPackageVersionDescription {
   dependencies: {[key: string]: string};
 }
 
+export interface PresPackageArtifact {
+  name: string;
+  version: string;
+  integrity: string;
+  parameters: {[key: string]: string};
+  dependencies: {
+    dependencies?: {[key: string]: string};
+    devDependencies?: {[key: string]: string};
+  };
+}
+
+export interface PresPackageMetaOptions {
+  integrity: string;
+  parameters: {[key: string]: string};
+}
+
 export interface PresSignedMessage {
   payload: any;
   signature: string;
