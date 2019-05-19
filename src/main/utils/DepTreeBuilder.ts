@@ -96,6 +96,10 @@ export class DepTreeBuilder {
         }
       }
       const resolver = this._resolvers.getItem(packageDescription.resolverName);
+      if (!resolver) {
+        log('Cannot get resolver for: ' + JSON.stringify(packageDescription));
+        throw new Error(`Resolver not found ${packageDescription.resolverName}`);
+      }
       return resolver.getMetaData(packageDescription).then((childMeta) => {
         const shouldBeInlined = !packageDescription.semVersion || isInRoot(this._root, packageName);
         const target = shouldBeInlined ? parent : this._root;

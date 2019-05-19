@@ -1,0 +1,21 @@
+{
+  "name": "praesidium-sample",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dspm.config.js",
+  "scripts": {
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dspm": {
+    "plugins": ["praesidiumProject"]
+  },
+  "devDependencies": {
+  },
+  "dependencies": {
+    "axios": "^0.18.0",
+    "bcrypt": "^3.0.6",
+    "lodash": "^4.17.11"
+  }
+}

@@ -5,6 +5,7 @@ import {Provider} from 'nconf';
 import {join} from 'path';
 import {applyJSProjectPlugin} from './plugins/JSProjectPlugin';
 import {applyNpmPlugin} from './plugins/NpmPlugin';
+import {applyPraesidiumProjectPlugin} from './plugins/PraesidiumProjectPlugin';
 import {Project} from './Project';
 
 function protectCicles(projectPath: string, evaluatedPaths: string[]) {
@@ -34,6 +35,7 @@ const envTransform = ({ key, value }: {key: string, value: string}) => {
 const PLUGINS: any = {
   jsProject: applyJSProjectPlugin,
   npm: applyNpmPlugin,
+  praesidiumProject: applyPraesidiumProjectPlugin,
 };
 
 async function getPackageInfo(project: Project): Promise<any> {

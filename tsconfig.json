@@ -10,8 +10,8 @@
       "es2015"
     ],
     "typeRoots": [
-      "./node_modules/@types",
-      "./types"
+      "./types",
+      "./node_modules/@types"
     ],
     "noUnusedLocals": true,
     "noUnusedParameters": true,
