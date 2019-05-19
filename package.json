@@ -46,6 +46,7 @@
   },
   "dependencies": {
     "@types/openpgp": "^4.4.4",
+    "@types/through2": "^2.0.34",
     "bluebird": "^3.5.1",
     "concat-stream": "^2.0.0",
     "detect-libc": "^1.0.3",
@@ -60,6 +61,7 @@
     "rimraf": "^2.6.2",
     "semver": "^5.5.0",
     "tar-fs": "^2.0.0",
-    "tar-stream": "^2.0.0"
+    "tar-stream": "^2.0.0",
+    "through2": "^3.0.1"
   }
 }

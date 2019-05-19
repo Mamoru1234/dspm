@@ -2,6 +2,8 @@ export interface PresidiumeResolverOptions {
   resolverName: string;
   repositoryUrl: string;
   publicKeyFile: string;
+  requestTimeout: number;
+  packageSizeLimit: number;
 }
 
 export interface PresidiumeResolverArgs {

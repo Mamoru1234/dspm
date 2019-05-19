@@ -9,7 +9,11 @@
   "author": "",
   "license": "ISC",
   "dspm": {
-    "plugins": ["praesidiumProject"]
+    "plugins": ["praesidiumProject"],
+    "presidiume": {
+      "publicKey": "/home/alexei/contribution/praesidiume/encryption_proxy/keys/public.key",
+      "repository": "http://localhost:3000"
+    }
   },
   "devDependencies": {
   },

@@ -3,7 +3,6 @@ import fs from 'fs-extra';
 import gunzip from 'gunzip-maybe';
 import {has, once} from 'lodash';
 import {key} from 'openpgp';
-import {stringify} from 'query-string';
 import {get as getStream} from 'request';
 import {get} from 'request-promise';
 import {maxSatisfying} from 'semver';
@@ -11,6 +10,7 @@ import {pipeline} from 'stream';
 import {extract, Headers} from 'tar-fs';
 import {log} from 'util';
 
+// import {rimrafAsync} from '../../utils/AsyncFsUtils';
 import {DepTreeNode} from '../../utils/DepTreeNode';
 import {PackageDescription} from '../../utils/package/PackageDescription';
 import {AutoReleaseSemaphore} from '../../utils/Semaphore';
@@ -28,6 +28,7 @@ import {
 } from './PresidiumeInterface';
 import Key = key.Key;
 import Timeout = NodeJS.Timeout;
+import {createIntegrityStream, createSizeValidationStream} from './PresValidationStreamUtils';
 
 // needed to avoid package/ prefix
 const mapNpmTarHeader = (header: Headers) => {
@@ -40,6 +41,8 @@ export class PresidiumeResolver implements DependencyResolver {
   private readonly _resolverName: string;
   private readonly _repositoryURL: string;
   private readonly _publicKeyFile: string;
+  private readonly _requestTimeout: number;
+  private readonly _packageSizeLimit: number;
   private _packageMetaCache: {[key: string]: Promise<PresPackageMeta>} = {};
   private _packageArtifactCache: {[key: string]: Promise<PresPackageArtifact>} = {};
   private _packageMetaResolveLimit = new AutoReleaseSemaphore(10);
@@ -48,27 +51,47 @@ export class PresidiumeResolver implements DependencyResolver {
     resolverName,
     repositoryUrl,
     publicKeyFile,
+    requestTimeout,
+    packageSizeLimit,
   }: PresidiumeResolverOptions) {
     this._repositoryURL = repositoryUrl;
     this._resolverName = resolverName;
     this._publicKeyFile = publicKeyFile;
+    this._requestTimeout = requestTimeout;
+    this._packageSizeLimit = packageSizeLimit * 1024; // transform into kb
     this._getPublicKey = once(this._getPublicKey);
   }
 
   public extract(targetFolder: string, depTreeNode: DepTreeNode<PresPackageMetaOptions>): Promise<void> {
     return new Promise<void>((res, rej) => {
       const { packageName, packageVersion, options } = depTreeNode;
-      const params = stringify(options!!.parameters);
-      const uri = `${this._repositoryURL}/artifact/download/${packageName}/${packageVersion}?${params}`;
-      const moduleStream = getStream(uri);
+      const url = `${this._repositoryURL}/artifact/download/${packageName}/${packageVersion}`;
+      const moduleStream = getStream({
+        qs: options!!.parameters,
+        url,
+      });
       const tempPipe = pipeline as any;
-      tempPipe(moduleStream, gunzip(), extract(targetFolder, { map: mapNpmTarHeader }), (err: Error) => {
+      const timeout = setTimeout(() => {
+        moduleStream.emit('error', `Request timout ${url}`);
+        moduleStream.abort();
+      }, this._requestTimeout);
+      const details = `${packageName} [${packageVersion}]`;
+      const integrity = createIntegrityStream(options!!.integrity, details);
+      const extractStream = extract(targetFolder, { map: mapNpmTarHeader });
+      const sizeStream = createSizeValidationStream(this._packageSizeLimit, details);
+      tempPipe(moduleStream, sizeStream, integrity, gunzip(), extractStream, (err: Error) => {
+        clearTimeout(timeout);
         if (err) {
+          log('Pres extract pipeline error: ' + JSON.stringify(err));
           rej(err);
           return;
         }
         res();
       });
+    }).catch(() => {
+      // return rimrafAsync(targetFolder).then(() => {
+      //   throw e;
+      // });
     });
   }
 
@@ -157,7 +180,7 @@ export class PresidiumeResolver implements DependencyResolver {
       timeout = setTimeout(() => {
         tRequest.abort();
         rej(`Request aborted ${url}`);
-      }, 10 * 1000 * 60); // FIXME introduce parameter
+      }, this._requestTimeout); // FIXME introduce parameter
     });
     return requestCall
       .then((text: string) => {
