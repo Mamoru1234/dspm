@@ -48,6 +48,7 @@
     "@types/openpgp": "^4.4.4",
     "bluebird": "^3.5.1",
     "concat-stream": "^2.0.0",
+    "detect-libc": "^1.0.3",
     "fs-extra": "^7.0.1",
     "gunzip-maybe": "^1.4.1",
     "lodash": "^4.17.11",

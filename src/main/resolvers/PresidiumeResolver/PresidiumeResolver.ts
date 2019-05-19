@@ -16,6 +16,7 @@ import {PackageDescription} from '../../utils/package/PackageDescription';
 import {AutoReleaseSemaphore} from '../../utils/Semaphore';
 import {DependencyResolver, PackageMetaData} from '../DependencyResolver';
 import {verifyJson} from './OpenPgpUtils';
+import {resolveParams} from './ParametersResolver';
 import {
   PresidiumeResolverArgs,
   PresidiumeResolverOptions,
@@ -26,6 +27,7 @@ import {
   PresSignedMessage,
 } from './PresidiumeInterface';
 import Key = key.Key;
+import Timeout = NodeJS.Timeout;
 
 // needed to avoid package/ prefix
 const mapNpmTarHeader = (header: Headers) => {
@@ -74,15 +76,13 @@ export class PresidiumeResolver implements DependencyResolver {
     return this._getPackageMeta(packageDescription.resolverArgs.packageName)
       .then((packageMeta: PresPackageMeta) => {
         log('Received meta: ' + packageMeta.name);
+        log('Resolving description: ' + JSON.stringify(packageDescription));
         const { versions } = packageMeta;
         const versionsText = versions.map((version) => version.version);
         const targetVersion = maxSatisfying(versionsText, packageDescription.resolverArgs.packageVersion);
         const versionDescription = versions.find((version) => version.version === targetVersion);
         if (!versionDescription) {
-          throw new Error('Version not found');
-        }
-        if (versionDescription.parameters.length !== 0) {
-          throw new Error('Not implemented');
+          throw new Error(`Version not found ${packageMeta.name} ${targetVersion}`);
         }
         return this._getPackageArtifact(versionDescription);
       })
@@ -136,15 +136,34 @@ export class PresidiumeResolver implements DependencyResolver {
     const { version, name } = packageVersionDescription;
     const cacheKey = `${name}#${version}`;
     if (!has(this._packageArtifactCache, cacheKey)) {
+      const url = `${this._repositoryURL}/artifact/metadata/${name}/${version}`;
       this._packageArtifactCache[cacheKey] = this._packageArtifactResolveLimit
-        .acquire(() => this._makeApiCall(`${this._repositoryURL}/artifact/metadata/${name}/${version}`));
+        .acquire(() => this._makeApiCall(url, resolveParams(packageVersionDescription.parameters)));
     }
     return this._packageArtifactCache[cacheKey];
   }
 
-  private _makeApiCall(url: string): Promise<any> {
-    return Promise.resolve(get(url))
-      .then((text: string) => JSON.parse(text))
+  private _makeApiCall(url: string, queryObject?: any): Promise<any> {
+    let timeout: Timeout = null as any;
+    const requestCall = new Promise<string>((res, rej) => {
+      const options: any = {
+        url,
+      };
+      if (queryObject) {
+        options.qs = queryObject;
+      }
+      const tRequest = get(options);
+      tRequest.then(res).catch(rej);
+      timeout = setTimeout(() => {
+        tRequest.abort();
+        rej(`Request aborted ${url}`);
+      }, 10 * 1000 * 60); // FIXME introduce parameter
+    });
+    return requestCall
+      .then((text: string) => {
+        clearTimeout(timeout);
+        return JSON.parse(text);
+      })
       .then((message: PresSignedMessage) => this._verifyApiMessage(message));
   }
 
