@@ -1,6 +1,7 @@
 import crypto from 'crypto';
-import { Transform } from 'stream';
+import {Transform} from 'stream';
 import through, {FlushCallback, TransformFunction} from 'through2';
+import {log} from 'util';
 
 export function createIntegrityStream(sri: string, details: string) {
   const [algorithm, hashValue] = sri.split('-');
@@ -13,7 +14,8 @@ export function createIntegrityStream(sri: string, details: string) {
   const flush: FlushCallback = function(this: Transform, next: any) {
     const digest = hash.digest('base64');
     if (digest !== hashValue) {
-      next(`Integrity mismatch: ${details}`);
+      log(`Integrity mismatch: ${details}`);
+      next();
       return;
     }
     next();
