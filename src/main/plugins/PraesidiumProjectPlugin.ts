@@ -13,12 +13,12 @@ export function applyPraesidiumProjectPlugin(project: Project) {
   }
   const config = get(packageJson, 'dspm.presidiume');
   const defaultMaxSize = 1024 * 100;
-  const timeout = get(config, 'timeout', 60 * 30);
+  const timeout = get(config, 'timeout', 60 * 15) * 1000;
   const presidiumeResolver = new PresidiumeResolver({
     packageSizeLimit: config.maxSize || defaultMaxSize,
     publicKeyFile: config.publicKey,
     repositoryUrl: config.repository,
-    requestTimeout: timeout * 1000,
+    requestTimeout: timeout,
     resolverName: 'npm',
   });
   resolvers.setItem('npm', presidiumeResolver);

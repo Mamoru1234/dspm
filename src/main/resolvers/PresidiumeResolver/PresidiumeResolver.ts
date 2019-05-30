@@ -10,7 +10,7 @@ import {pipeline} from 'stream';
 import {extract, Headers} from 'tar-fs';
 import {log} from 'util';
 
-// import {rimrafAsync} from '../../utils/AsyncFsUtils';
+import {rimrafAsync} from '../../utils/AsyncFsUtils';
 import {DepTreeNode} from '../../utils/DepTreeNode';
 import {PackageDescription} from '../../utils/package/PackageDescription';
 import {AutoReleaseSemaphore} from '../../utils/Semaphore';
@@ -88,10 +88,10 @@ export class PresidiumeResolver implements DependencyResolver {
         }
         res();
       });
-    }).catch(() => {
-      // return rimrafAsync(targetFolder).then(() => {
-      //   throw e;
-      // });
+    }).catch((e: any) => {
+      return rimrafAsync(targetFolder).then(() => {
+        throw e;
+      });
     });
   }
 
@@ -104,6 +104,9 @@ export class PresidiumeResolver implements DependencyResolver {
         const versionsText = versions.map((version) => version.version);
         const targetVersion = maxSatisfying(versionsText, packageDescription.resolverArgs.packageVersion);
         const versionDescription = versions.find((version) => version.version === targetVersion);
+        if (versions.length === 0) {
+          throw new Error(`Pre build is not supported for package ${packageMeta.name}`);
+        }
         if (!versionDescription) {
           throw new Error(`Version not found ${packageMeta.name} ${targetVersion}`);
         }
