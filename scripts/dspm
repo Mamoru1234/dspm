@@ -21,10 +21,8 @@ ensureConfig () {
         read -p "Do you want to generate default config? [y/n] " -n 1 -r
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-            echo """const { applyJSProjectPlugin } = require('./.dspm/dist/main/plugins/JSProjectPlugin');
-
+            echo """
 module.exports = (project) => {
-  applyJSProjectPlugin(project);
 };
 
 """ >> "$CWD/dspm.config.js"
