@@ -1,7 +1,7 @@
 import {expect} from 'chai';
 import {FileDependencyResolver} from './FileDependencyResolver';
 
-describe.skip('resolvers/FileResolver', () => {
+describe('resolvers/FileResolver', () => {
   describe('getMetaData', () => {
     describe('correct archive(withPackage.tgz)', () => {
       const packageDescription = {

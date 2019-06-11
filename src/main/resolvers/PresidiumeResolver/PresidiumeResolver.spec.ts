@@ -8,6 +8,11 @@ import {DepTreeNode} from '../../utils/DepTreeNode';
 import {PresPackageMetaOptions} from './PresidiumeInterface';
 import {PresidiumeResolver} from './PresidiumeResolver';
 
+if (process.env.TRAVIS === 'true') {
+  // @ts-ignore
+  return;
+}
+
 chai.use(promised);
 
 const expect = chai.expect;

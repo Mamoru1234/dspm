@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import {resolve} from 'path';
-import {error} from 'util';
+import {log} from 'util';
 
 import { ProjectCreator } from '../main/ProjectCreator';
 
@@ -13,19 +13,19 @@ async function main() {
   if (task) {
     task.run()
       .catch((e: any) => {
-        error('Error during task execution');
-        error(e);
+        log('Error during task execution');
+        log(e);
         process.exit(-1);
       });
   } else {
-    error(`Task ${taskName} not found in project`);
+    log(`Task ${taskName} not found in project`);
     process.exit(-1);
   }
 }
 
 main()
   .catch((e) => {
-    error('Error during project evaluation');
-    error(e);
+    log('Error during project evaluation');
+    log(e);
     process.exit(-1);
   });
