@@ -8,7 +8,7 @@ import {applyNpmPlugin} from './plugins/NpmPlugin';
 import {applyPraesidiumProjectPlugin} from './plugins/PraesidiumProjectPlugin';
 import {Project} from './Project';
 
-function protectCicles(projectPath: string, evaluatedPaths: string[]) {
+function protectCircles(projectPath: string, evaluatedPaths: string[]) {
   if (evaluatedPaths.indexOf(projectPath) !== -1) {
     throw new Error(`${projectPath} is already in evaluation ${JSON.stringify(evaluatedPaths)}`);
   }
@@ -85,7 +85,7 @@ async function ensureSubProjects(project: Project, packageInfo: any, evaluatedPa
 }
 
 async function createProject(projectPath: string, evaluatedPaths: string[]): Promise<Project> {
-  protectCicles(projectPath, evaluatedPaths);
+  protectCircles(projectPath, evaluatedPaths);
   const provider = new Provider();
   provider
     .env({

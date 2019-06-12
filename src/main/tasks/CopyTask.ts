@@ -1,9 +1,11 @@
 import Promise from 'bluebird';
+import { has } from 'lodash';
+import { render } from 'mustache';
 import { basename, join } from 'path';
 import { log } from 'util';
 import {Project} from '../Project';
 import {Task} from '../Task';
-import { copyAsync } from '../utils/AsyncFsUtils';
+import {copyAsync, readFileAsync, writeFileAsync} from '../utils/AsyncFsUtils';
 import {normalizePath} from '../utils/PathUtils';
 
 export class CopyTask extends Task {
@@ -15,6 +17,7 @@ export class CopyTask extends Task {
 
   private _fromPaths: string[] = [];
   private _fromFiles: string[] = [];
+  private _templateOptions: {[filePath: string]: any} = {};
   private _targetPath: string = '';
 
   public from(source: string): this {
@@ -22,8 +25,10 @@ export class CopyTask extends Task {
     return this;
   }
 
-  public fromFile(source: string): this {
-    this._fromFiles.push(normalizePath(this.project.getProjectPath(), source));
+  public fromFile(source: string, options?: any): this {
+    const filePath = normalizePath(this.project.getProjectPath(), source);
+    this._fromFiles.push(filePath);
+    this._templateOptions[filePath] = options;
     return this;
   }
 
@@ -44,9 +49,19 @@ export class CopyTask extends Task {
       return copyAsync(path, this._targetPath);
     })
       .then(() => {
-        return Promise.mapSeries(this._fromFiles, (file: string) => {
+        return Promise.mapSeries(this._fromFiles, (file: string): any => {
           log(`Copying file ${file} into ${this._targetPath}`);
           const fileName = basename(file);
+          if (has(this._templateOptions, file)) {
+            log(`Processing file ${file} as template`);
+            return readFileAsync(file)
+              .then((content) => {
+                return render(content as string, this._templateOptions[file]);
+              })
+              .then((content) => {
+                return writeFileAsync(join(this._targetPath, fileName), content);
+              });
+          }
           return copyAsync(file, join(this._targetPath, fileName));
         });
       });
