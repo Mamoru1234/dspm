@@ -11,6 +11,7 @@ export class Project {
 
   constructor(
     private _provider: Provider,
+    private _packageJson: any,
     private _projectPath: string) {}
 
   public setSubProjects(subProjects: {[key: string]: Project}) {
@@ -26,6 +27,10 @@ export class Project {
 
   public getProjectPath() {
     return this._projectPath;
+  }
+
+  public getPackageJson() {
+    return this._packageJson;
   }
 
   public getProperty(key: string, defaultValue?: any) {

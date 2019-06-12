@@ -31,7 +31,7 @@ export function applyJSProjectPlugin(project: Project) {
   const lockProviders = project.ensureNameSpace('lock_providers');
   lockProviders.setItem('default', new FSLockProvider(join(project.getProjectPath(), 'dspm.lock.json')));
 
-  const packageJson = require(join(project.getProjectPath(), 'package.json'));
+  const packageJson = project.getPackageJson();
   const dependencies = merge({}, packageJson.dependencies, packageJson.devDependencies);
 
   DependencyResolveTask.create(project, 'dependencyResolve')

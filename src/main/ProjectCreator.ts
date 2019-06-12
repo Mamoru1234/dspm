@@ -38,11 +38,11 @@ const PLUGINS: any = {
   praesidiumProject: applyPraesidiumProjectPlugin,
 };
 
-async function getPackageInfo(project: Project): Promise<any> {
-  const packageInfoPath = join(project.getProjectPath(), 'package.json');
+async function getPackageInfo(projectPath: string): Promise<any> {
+  const packageInfoPath = join(projectPath, 'package.json');
   const hasJson = await fs.pathExists(packageInfoPath);
   if (!hasJson) {
-    throw new Error(`No package.json in: ${project.getProjectPath()}`);
+    throw new Error(`No package.json in: ${projectPath}`);
   }
   return await fs.readJson(packageInfoPath);
 }
@@ -94,9 +94,9 @@ async function createProject(projectPath: string, evaluatedPaths: string[]): Pro
     })
     .argv();
 
-  const project = new Project(provider, projectPath);
+  const packageInfo = await getPackageInfo(projectPath);
 
-  const packageInfo = await getPackageInfo(project);
+  const project = new Project(provider, packageInfo, projectPath);
 
   applyPlugins(project, packageInfo, PLUGINS);
 

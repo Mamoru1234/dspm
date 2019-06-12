@@ -1,5 +1,4 @@
 import { get, has } from 'lodash';
-import {join} from 'path';
 import {Project} from '../Project';
 import {PresidiumeResolver} from '../resolvers/PresidiumeResolver/PresidiumeResolver';
 import {applyJSProjectPlugin} from './JSProjectPlugin';
@@ -7,7 +6,7 @@ import {applyJSProjectPlugin} from './JSProjectPlugin';
 export function applyPraesidiumProjectPlugin(project: Project) {
   applyJSProjectPlugin(project);
   const resolvers = project.ensureNameSpace('resolvers');
-  const packageJson = require(join(project.getProjectPath(), 'package.json'));
+  const packageJson = project.getPackageJson();
   if (!has(packageJson, 'dspm.presidiume')) {
     throw new Error('presidiume config is required');
   }
