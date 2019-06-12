@@ -60,6 +60,19 @@ function applyPlugins(project: Project, packageInfo: any, plugins: any) {
   });
 }
 
+async function evalConfiguration(project: Project) {
+  const configPath = join(project.getProjectPath(), './dspm.config.js');
+  if (!(await fs.pathExists(configPath))) {
+    return;
+  }
+  const configuration = require(configPath);
+  if (isConfiguration(configuration)) {
+    configuration(project);
+    return;
+  }
+  throw new Error('Wrong configuration format');
+}
+
 async function ensureSubProjects(project: Project, packageInfo: any, evaluatedPaths: string[]) {
   if (!has(packageInfo, 'dspm.subProjects')) {
     return;
@@ -88,14 +101,8 @@ async function createProject(projectPath: string, evaluatedPaths: string[]): Pro
   applyPlugins(project, packageInfo, PLUGINS);
 
   await ensureSubProjects(project, packageInfo, evaluatedPaths);
-
-  const configuration = require(join(projectPath, './dspm.config.js'));
-
-  if (isConfiguration(configuration)) {
-    configuration(project);
-    return project;
-  }
-  throw new Error('Wrong configuration');
+  await evalConfiguration(project);
+  return project;
 }
 
 export class ProjectCreator {
