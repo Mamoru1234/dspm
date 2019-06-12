@@ -1,7 +1,7 @@
 import Promise from 'bluebird';
 import {find, forEach, some} from 'lodash';
+import log4js from 'log4js';
 import {satisfies} from 'semver';
-import {log} from 'util';
 import {Namespace} from '../Namespace';
 import {DependencyResolver} from '../resolvers/DependencyResolver';
 import {DepTreeNode} from './DepTreeNode';
@@ -9,15 +9,17 @@ import {PackageDescription} from './package/PackageDescription';
 import {convertDependenciesMap} from './package/PackageJsonParse';
 import {ResolutionQueue, ResolutionQueueItem} from './ResolutionQueue';
 
+const logger = log4js.getLogger('utils/DepTreeBuilder');
+
 export function logDepTree(node: DepTreeNode, level: number, depth: number) {
   if (level === depth) {
     return;
   }
-  log(`Level: ${level}`);
-  log(`Node: ${node.packageName}: ${node.packageVersion}`);
-  log(`Resolved by: ${node.resolvedBy}`);
-  log(`Deps: `);
-  log('');
+  logger.info(`Level: ${level}`);
+  logger.info(`Node: ${node.packageName}: ${node.packageVersion}`);
+  logger.info(`Resolved by: ${node.resolvedBy}`);
+  logger.info(`Deps: `);
+  logger.info('');
   forEach(node.children, (child) => {
     logDepTree(child, level + 1, depth);
   });
@@ -97,7 +99,7 @@ export class DepTreeBuilder {
       }
       const resolver = this._resolvers.getItem(packageDescription.resolverName);
       if (!resolver) {
-        log('Cannot get resolver for: ' + JSON.stringify(packageDescription));
+        logger.error('Cannot get resolver for: ' + JSON.stringify(packageDescription));
         throw new Error(`Resolver not found ${packageDescription.resolverName}`);
       }
       return resolver.getMetaData(packageDescription).then((childMeta) => {

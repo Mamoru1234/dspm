@@ -1,6 +1,8 @@
 import Promise from 'bluebird';
-import {log} from 'util';
+import log4js from 'log4js';
 import {Project} from './Project';
+
+const logger = log4js.getLogger('main/Task');
 
 export class Task {
   private _dependencies: Task[] = [];
@@ -35,20 +37,20 @@ export class Task {
         .then(() => this.upToDate())
         .then((isUpToDate: boolean) => {
           if (isUpToDate) {
-            log(`${this.name} is up to date`);
+            logger.info(`${this.name} is up to date`);
             return Promise.resolve();
           }
-          log(`Executing ${this.name}`);
+          logger.info(`Executing ${this.name}`);
           return this.exec();
         })
         .catch((e: any) => {
           /* tslint:disable */
-          console.error('');
-          console.error('===============');
-          console.error('|||||||||||||||');
-          console.error('///////////////');
-          console.error(e);
-          console.error('');
+          logger.error('');
+          logger.error('===============');
+          logger.error('|||||||||||||||');
+          logger.error('///////////////');
+          logger.error(e);
+          logger.error('');
           process.exit(-1);
           /* tslint:enable */
         });
@@ -57,7 +59,7 @@ export class Task {
   }
 
   public exec(): Promise<any> {
-    log(`Exec: ${this.name}`);
+    logger.info(`Exec: ${this.name}`);
     return Promise.resolve();
   }
 }

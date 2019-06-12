@@ -1,8 +1,12 @@
 #!/usr/bin/env node
+import log4js from 'log4js';
 import {resolve} from 'path';
-import {log} from 'util';
-
+import { configure, LOG_FILE_PATH } from '../main/configure/ConfigureLog';
 import { ProjectCreator } from '../main/ProjectCreator';
+
+configure();
+
+const logger = log4js.getLogger('bin/dspm');
 
 async function main() {
   const project = await ProjectCreator.createProject(resolve('.'));
@@ -13,19 +17,26 @@ async function main() {
   if (task) {
     task.run()
       .catch((e: any) => {
-        log('Error during task execution');
-        log(e);
+        logger.error('Error during task execution');
+        logger.error(e);
         process.exit(-1);
       });
   } else {
-    log(`Task ${taskName} not found in project`);
+    logger.error(`Task ${taskName} not found in project`);
     process.exit(-1);
   }
 }
 
+process.on('exit', (code: number) => {
+  if (code !== 0) {
+    // tslint:disable-next-line
+    console.log(`Log file path: ${LOG_FILE_PATH}`);
+  }
+});
+
 main()
   .catch((e) => {
-    log('Error during project evaluation');
-    log(e);
+    logger.error('Error during project evaluation');
+    logger.error(e);
     process.exit(-1);
   });

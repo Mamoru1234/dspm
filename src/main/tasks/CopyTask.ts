@@ -1,12 +1,14 @@
 import Promise from 'bluebird';
 import { has } from 'lodash';
+import log4js from 'log4js';
 import { render } from 'mustache';
 import { basename, join } from 'path';
-import { log } from 'util';
 import {Project} from '../Project';
 import {Task} from '../Task';
 import {copyAsync, readFileAsync, writeFileAsync} from '../utils/AsyncFsUtils';
 import {normalizePath} from '../utils/PathUtils';
+
+const logger = log4js.getLogger('tasks/CopyTask');
 
 export class CopyTask extends Task {
   public static create(project: Project, name: string): CopyTask {
@@ -45,15 +47,15 @@ export class CopyTask extends Task {
       throw new Error(`You should specify target path`);
     }
     return Promise.mapSeries(this._fromPaths, (path: string) => {
-      log(`Copying ${path} into ${this._targetPath}`);
+      logger.info(`Copying ${path} into ${this._targetPath}`);
       return copyAsync(path, this._targetPath);
     })
       .then(() => {
         return Promise.mapSeries(this._fromFiles, (file: string): any => {
-          log(`Copying file ${file} into ${this._targetPath}`);
+          logger.info(`Copying file ${file} into ${this._targetPath}`);
           const fileName = basename(file);
           if (has(this._templateOptions, file)) {
-            log(`Processing file ${file} as template`);
+            logger.info(`Processing file ${file} as template`);
             return readFileAsync(file)
               .then((content) => {
                 return render(content as string, this._templateOptions[file]);

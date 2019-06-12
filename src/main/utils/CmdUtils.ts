@@ -1,7 +1,9 @@
 import Promise from 'bluebird';
 import {spawn, SpawnOptions} from 'child_process';
 import assign from 'lodash/assign';
-import {log} from 'util';
+import log4js from 'log4js';
+
+const logger = log4js.getLogger('utils/CmdUtils');
 
 const SHELL = process.platform === 'win32'
   ? 'cmd'
@@ -21,7 +23,7 @@ export function executeCommand(command: string, spawnOptions?: SpawnOptions): Pr
 
     const options = assign({}, DEFAULT_OPTIONS, spawnOptions);
 
-    log(`Executing command: ${command}`);
+    logger.info(`Executing command: ${command}`);
 
     spawn(SHELL, [SHELL_FLAG, command], options)
       .on('close', (code: number) => {

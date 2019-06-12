@@ -2,13 +2,13 @@ import Promise from 'bluebird';
 import fs from 'fs-extra';
 import gunzip from 'gunzip-maybe';
 import {has, once} from 'lodash';
+import log4js from 'log4js';
 import {key} from 'openpgp';
 import {get as getStream} from 'request';
 import {get} from 'request-promise';
 import {maxSatisfying} from 'semver';
 import {pipeline} from 'stream';
 import {extract, Headers} from 'tar-fs';
-import {log} from 'util';
 
 import {rimrafAsync} from '../../utils/AsyncFsUtils';
 import {DepTreeNode} from '../../utils/DepTreeNode';
@@ -29,6 +29,8 @@ import {
 import Key = key.Key;
 import Timeout = NodeJS.Timeout;
 import {createIntegrityStream, createSizeValidationStream} from './PresValidationStreamUtils';
+
+const logger = log4js.getLogger('resolvers/PresidiumeResolver');
 
 // needed to avoid package/ prefix
 const mapNpmTarHeader = (header: Headers) => {
@@ -82,7 +84,7 @@ export class PresidiumeResolver implements DependencyResolver {
       tempPipe(moduleStream, sizeStream, integrity, gunzip(), extractStream, (err: Error) => {
         clearTimeout(timeout);
         if (err) {
-          log('Pres extract pipeline error: ' + JSON.stringify(err));
+          logger.error('Pres extract pipeline error: ' + JSON.stringify(err));
           rej(err);
           return;
         }
@@ -98,8 +100,8 @@ export class PresidiumeResolver implements DependencyResolver {
   public getMetaData(packageDescription: PackageDescription<PresidiumeResolverArgs>): Promise<PackageMetaData> {
     return this._getPackageMeta(packageDescription.resolverArgs.packageName)
       .then((packageMeta: PresPackageMeta) => {
-        log('Received meta: ' + packageMeta.name);
-        log('Resolving description: ' + JSON.stringify(packageDescription));
+        logger.info('Received meta: ' + packageMeta.name);
+        logger.info('Resolving description: ' + JSON.stringify(packageDescription));
         const { versions } = packageMeta;
         const versionsText = versions.map((version) => version.version);
         const targetVersion = maxSatisfying(versionsText, packageDescription.resolverArgs.packageVersion);
@@ -114,7 +116,7 @@ export class PresidiumeResolver implements DependencyResolver {
       })
       .then((artifact: PresPackageArtifact): PackageMetaData<PresPackageMetaOptions> => {
         const {name, parameters, integrity, version, dependencies} = artifact;
-        log(`Received artifact: ${name} ${version}`);
+        logger.info(`Received artifact: ${name} ${version}`);
         const nodeDependencies = dependencies.dependencies!!;
         return {
           dependencies: nodeDependencies,

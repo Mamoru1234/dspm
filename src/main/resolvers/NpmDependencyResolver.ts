@@ -2,12 +2,12 @@ import Promise from 'bluebird';
 import { ensureDirSync } from 'fs-extra';
 import gunzip from 'gunzip-maybe';
 import { has, noop } from 'lodash';
+import log4js from 'log4js';
 import { join } from 'path';
 import { get as originalGet } from 'request';
 import { get } from 'request-promise';
 import {maxSatisfying} from 'semver';
 import {extract, Headers} from 'tar-fs';
-import {log} from 'util';
 
 import {ContentCache} from '../caches/ContentCache';
 import {FSContentCache} from '../caches/FSContentCache';
@@ -17,6 +17,8 @@ import {PackageDescription} from '../utils/package/PackageDescription';
 import {AutoReleaseSemaphore} from '../utils/Semaphore';
 import {DependencyResolver, PackageMetaData} from './DependencyResolver';
 import ReadableStream = NodeJS.ReadableStream;
+
+const logger = log4js.getLogger('resolvers/NpmResolver');
 
 function findInVersions(versions: any, packageDescription: string, packageName: string) {
   const keys = Object.keys(versions);
@@ -93,7 +95,7 @@ export class NpmDependencyResolver implements DependencyResolver {
       }
       return this._modulesCache.hasItem(itemKey)
         .then((isInCache) => {
-          log(`${node.packageName} [${node.packageVersion}] in cache: ${isInCache}`);
+          logger.info(`${node.packageName} [${node.packageVersion}] in cache: ${isInCache}`);
           if (!isInCache) {
             return this.__extractFromRegistry(targetFolder, node);
           }
@@ -150,7 +152,7 @@ export class NpmDependencyResolver implements DependencyResolver {
   }
 
   private __getMetaData(packageName: string, packageDescription: string): Promise<PackageMetaData> {
-    log(`Get Metadata: ${packageName}[${packageDescription}]`);
+    logger.info(`Get Metadata: ${packageName}[${packageDescription}]`);
     return this.__getPackageData(packageName).then((res: any) => {
       const response = JSON.parse(res);
       const { versions } = response;

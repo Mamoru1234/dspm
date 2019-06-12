@@ -1,8 +1,8 @@
 import Promise from 'bluebird';
 import {chmodSync, constants} from 'fs-extra';
 import {get, noop, once} from 'lodash';
+import log4js from 'log4js';
 import {join} from 'path';
-import {log} from 'util';
 
 import {Namespace} from '../Namespace';
 import {DependencyResolver} from '../resolvers/DependencyResolver';
@@ -10,6 +10,8 @@ import {ensureDirAsync, symLinkAsync} from './AsyncFsUtils';
 import {executeCommand} from './CmdUtils';
 import {DepTreeNode} from './DepTreeNode';
 import {breadTraversal, deepTraversal} from './DepTreeUtils';
+
+const logger = log4js.getLogger('utils/ExtractTreeProvider');
 
 interface NodeContext {
   parentPath: string;
@@ -35,7 +37,7 @@ export class ExtractTreeProvider {
   public extractTree(root: DepTreeNode): Promise<any> {
     return deepTraversal(root, this._installNode.bind(this), { parentPath: this._targetPath})
       .tap(() => {
-        log('Install phase completed');
+        logger.info('Install phase completed');
       })
       .then(() => breadTraversal(root, this._modulePrefix, this._targetPath, this._provideBinLinks.bind(this)))
       .then(() => breadTraversal(root, this._modulePrefix, this._targetPath, this._postInstallNode.bind(this)));
@@ -44,7 +46,7 @@ export class ExtractTreeProvider {
     if (!node.packageName || !node.packageVersion || !node.resolvedBy) {
       return Promise.resolve(null);
     }
-    log(`Installing node for parent: ${parentPath} ${node.packageName}`);
+    logger.info(`Installing node for parent: ${parentPath} ${node.packageName}`);
     const resolver = this._resolvers.getItem(node.resolvedBy);
     if (!resolver) {
       // tslint:disable-next-line
@@ -110,7 +112,7 @@ export class ExtractTreeProvider {
     return Promise.reject('Unknown bin links creation error');
   }
   private _createBinLink(binPath: string, binKey: string, linkPath: string) {
-    log(`Linking: [${binKey}]: ${linkPath} into ${binPath}`);
+    logger.info(`Linking: [${binKey}]: ${linkPath} into ${binPath}`);
     const targetLink = join(this._binPath, binKey);
     return ensureDirAsync(binPath)
       .then(() => symLinkAsync(linkPath, targetLink))

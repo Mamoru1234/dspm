@@ -2,11 +2,13 @@
 import Promise from 'bluebird';
 import {DependencyResolver, PackageMetaData} from '../resolvers/DependencyResolver';
 import sinon from 'sinon';
+import log4js from 'log4js';
 import forEach from 'lodash/forEach';
 import {DepTreeNode} from './DepTreeNode';
-import {log} from 'util';
 import {createTimer} from './TimerPromise';
 import {PackageDescription} from './package/PackageDescription';
+
+const logger = log4js.getLogger('utils/TestDepResolverTest');
 
 export interface ResolutionParam {
   time: number;
@@ -20,15 +22,15 @@ export class TestDepResolver implements DependencyResolver{
   public getMetadataStub: sinon.SinonStub;
 
   extract(targetFolder: string, node: DepTreeNode): Promise<void> {
-    log(targetFolder);
-    log(node.packageName!!);
+    logger.info(targetFolder);
+    logger.info(node.packageName!!);
     throw new Error('this kind of resolver not designed for extract');
   }
 
   getMetaData(packageDescription: PackageDescription): Promise<PackageMetaData> {
     const resolverArgs = packageDescription.resolverArgs;
-    log(resolverArgs.packageName);
-    log(resolverArgs.packageVersion);
+    logger.info(resolverArgs.packageName);
+    logger.info(resolverArgs.packageVersion);
     throw new Error('Unreached code');
   }
 

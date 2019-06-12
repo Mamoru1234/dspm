@@ -1,7 +1,9 @@
 import crypto from 'crypto';
+import log4js from 'log4js';
 import {Transform} from 'stream';
 import through, {FlushCallback, TransformFunction} from 'through2';
-import {log} from 'util';
+
+const logger = log4js.getLogger('resolvers/PresValidationStreamUtils');
 
 export function createIntegrityStream(sri: string, details: string) {
   const [algorithm, hashValue] = sri.split('-');
@@ -14,7 +16,7 @@ export function createIntegrityStream(sri: string, details: string) {
   const flush: FlushCallback = function(this: Transform, next: any) {
     const digest = hash.digest('base64');
     if (digest !== hashValue) {
-      log(`Integrity mismatch: ${details}`);
+      logger.error(`Integrity mismatch: ${details}`);
       next();
       return;
     }
