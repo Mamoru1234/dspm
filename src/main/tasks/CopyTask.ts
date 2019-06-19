@@ -1,5 +1,4 @@
 import Promise from 'bluebird';
-import { has } from 'lodash';
 import log4js from 'log4js';
 import { render } from 'mustache';
 import { basename, join } from 'path';
@@ -18,7 +17,7 @@ export class CopyTask extends Task {
   }
 
   private _fromPaths: string[] = [];
-  private _fromFiles: string[] = [];
+  private _fromFiles: {[path: string]: any} = {};
   private _templateOptions: {[filePath: string]: any} = {};
   private _targetPath: string = '';
 
@@ -29,7 +28,7 @@ export class CopyTask extends Task {
 
   public fromFile(source: string, options?: any): this {
     const filePath = normalizePath(this.project.getProjectPath(), source);
-    this._fromFiles.push(filePath);
+    this._fromFiles[filePath] = options;
     this._templateOptions[filePath] = options;
     return this;
   }
@@ -51,14 +50,18 @@ export class CopyTask extends Task {
       return copyAsync(path, this._targetPath);
     })
       .then(() => {
-        return Promise.mapSeries(this._fromFiles, (file: string): any => {
+        return Promise.mapSeries(Object.keys(this._fromFiles), (file: string): any => {
           logger.info(`Copying file ${file} into ${this._targetPath}`);
           const fileName = basename(file);
-          if (has(this._templateOptions, file)) {
+          if (this._fromFiles[file]) {
             logger.info(`Processing file ${file} as template`);
             return readFileAsync(file)
               .then((content) => {
-                return render(content as string, this._templateOptions[file]);
+                const templateOption = this._fromFiles[file];
+                const resolvedOptions = typeof templateOption === 'function'
+                  ? templateOption()
+                  : templateOption;
+                return render(content.toString(), resolvedOptions);
               })
               .then((content) => {
                 return writeFileAsync(join(this._targetPath, fileName), content);
