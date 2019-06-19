@@ -1,6 +1,6 @@
 import { Project } from '../Project';
-import { CmdTask } from '../tasks/CmdTask';
 import { CopyTask } from '../tasks/CopyTask';
+import {NpmPublish} from '../tasks/NpmPublish';
 import {GitVersionResolver} from '../tasks/VersionTask/GitVersionResolver';
 import {VersionResolver} from '../tasks/VersionTask/VersionResolver';
 import {VersionTask} from '../tasks/VersionTask/VersionTask';
@@ -17,7 +17,7 @@ export function applyNpmPlugin(project: Project) {
 
   VersionTask.create(project, 'findVersion');
 
-  CmdTask.create(project, 'publish')
-    .command('npm publish ./build/module')
+  NpmPublish.create(project, 'publish')
+    .modulePath('./build/module')
     .dependsOn('package');
 }
