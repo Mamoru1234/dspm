@@ -1,7 +1,7 @@
 import Promise from 'bluebird';
 import {join} from 'path';
 
-import {DepTreeNode} from './DepTreeNode';
+import {DepTreeNode} from '../../utils/DepTreeNode';
 
 export type NodeMapper<T> = (node: DepTreeNode, context: T) => Promise<T>;
 

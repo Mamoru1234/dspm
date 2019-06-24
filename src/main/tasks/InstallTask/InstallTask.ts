@@ -1,12 +1,12 @@
 import Promise from 'bluebird';
 import {join} from 'path';
-import {Project} from '../Project';
-import {DependencyResolver} from '../resolvers/DependencyResolver';
-import {Task} from '../Task';
-import {rimrafAsync} from '../utils/AsyncFsUtils';
-import {ExtractTreeProvider} from '../utils/ExtractTreeProvider';
-import {normalizePath} from '../utils/PathUtils';
-import {DependencyResolveTask} from './DependencyResolveTask';
+import {Project} from '../../Project';
+import {DependencyResolver} from '../../resolvers/DependencyResolver';
+import {Task} from '../../Task';
+import {rimrafAsync} from '../../utils/AsyncFsUtils';
+import {normalizePath} from '../../utils/PathUtils';
+import {DependencyResolveTask} from '../DependencyResolveTask';
+import {ExtractTreeProvider} from './ExtractTreeProvider';
 
 export class InstallTask extends Task {
 

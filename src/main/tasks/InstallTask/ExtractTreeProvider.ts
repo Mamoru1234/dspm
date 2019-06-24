@@ -4,11 +4,11 @@ import {get, noop, once} from 'lodash';
 import log4js from 'log4js';
 import {join} from 'path';
 
-import {Namespace} from '../Namespace';
-import {DependencyResolver} from '../resolvers/DependencyResolver';
-import {ensureDirAsync, symLinkAsync} from './AsyncFsUtils';
-import {executeCommand} from './CmdUtils';
-import {DepTreeNode} from './DepTreeNode';
+import {Namespace} from '../../Namespace';
+import {DependencyResolver} from '../../resolvers/DependencyResolver';
+import {ensureDirAsync, symLinkAsync} from '../../utils/AsyncFsUtils';
+import {executeCommand} from '../../utils/CmdUtils';
+import {DepTreeNode} from '../../utils/DepTreeNode';
 import {breadTraversal, deepTraversal} from './DepTreeUtils';
 
 const logger = log4js.getLogger('utils/ExtractTreeProvider');
@@ -23,7 +23,6 @@ export class ExtractTreeProvider {
   private _createBinFolder: () => Promise<any>;
 
   constructor(
-    /*private _project: Project,*/
     private _targetPath: string,
     private _modulePrefix: string,
     private _resolvers: Namespace<DependencyResolver>,
@@ -34,7 +33,7 @@ export class ExtractTreeProvider {
     });
     this._executionPath = `${this._binPath}:${process.env.PATH}`;
   }
-  public extractTree(root: DepTreeNode): Promise<any> {
+  public extractTree(root: DepTreeNode): Promise<void> {
     return deepTraversal(root, this._installNode.bind(this), { parentPath: this._targetPath})
       .tap(() => {
         logger.info('Install phase completed');
@@ -55,7 +54,6 @@ export class ExtractTreeProvider {
     }
     const packageName = node.packageName;
     const scripts = get(node, 'options.scripts');
-    // TODO mkdirp here, refactor extract
     const modulePath = join(parentPath, this._modulePrefix, packageName);
     return ensureDirAsync(modulePath)
       .then(() => this._executeScript(parentPath, scripts, 'preinstall'))
